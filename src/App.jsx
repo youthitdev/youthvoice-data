@@ -560,7 +560,7 @@ export default function App() {
                 <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:"1px solid #f0f0f0"}}>
                   <div style={{width:28,height:14,borderRadius:3,background:catColor(legend,b.cat),flexShrink:0}}/>
                   <div style={{flex:1,fontSize:12}}>
-                    {b.s}월 ~ {b.e}월{b.l?` · ${b.l}`:""} <span style={{fontSize:10,color:"#888",fontWeight:600}}>[{catName(legend,b.cat)}]</span>
+                    {monthFloatToLabel(b.s)}~{monthFloatToLabel(b.e)}{b.l?` · ${b.l}`:""} <span style={{fontSize:10,color:"#888",fontWeight:600}}>[{catName(legend,b.cat)}]</span>
                   </div>
                   <button onClick={()=>setTempProg(p=>({...p,bars:p.bars.filter((_,j)=>j!==i)}))}
                     style={{background:"none",border:"none",cursor:"pointer",color:"#b2bec3",fontSize:14}}>✕</button>
