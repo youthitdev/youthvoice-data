@@ -619,19 +619,24 @@ export default function App() {
         <p style={{fontSize:12,color:"#888",marginBottom:16,lineHeight:1.6}}>
           항목명과 색상을 자유롭게 수정하세요. 저장하면 팀 전체에 즉시 반영됩니다.
         </p>
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:14}}>
           {tempLeg.map((leg,li)=>(
-            <div key={leg.id} style={{display:"flex",alignItems:"flex-start",gap:10,
-                                      padding:"12px 14px",background:"#f8f9fa",borderRadius:8,border:"1px solid #eee"}}>
-              <div style={{paddingTop:6,minWidth:180}}>
+            <div key={leg.id} style={{background:"#f8f9fa",borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+              {/* 항목명 + 삭제 */}
+              <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px 8px"}}>
+                <div style={{width:20,height:20,borderRadius:5,background:leg.color,flexShrink:0,border:"2px solid rgba(0,0,0,0.08)"}}/>
+                <div style={{flex:1}}>
+                  <Inp value={leg.name} placeholder="항목명 입력"
+                    style={{fontWeight:600,fontSize:14}}
+                    onChange={e=>setTempLeg(l=>l.map((x,i)=>i===li?{...x,name:e.target.value}:x))} />
+                </div>
+                <Btn sm v="danger" onClick={()=>delLegRow(li)}>🗑️</Btn>
+              </div>
+              {/* 색상 피커 */}
+              <div style={{padding:"0 14px 12px"}}>
+                <div style={{fontSize:11,color:"#b2bec3",fontWeight:600,marginBottom:6}}>색상 선택</div>
                 <ColorPicker value={leg.color} onChange={c=>setTempLeg(l=>l.map((x,i)=>i===li?{...x,color:c}:x))} />
               </div>
-              <div style={{flex:1}}>
-                <label style={{fontSize:11,color:"#888",fontWeight:600,display:"block",marginBottom:4}}>항목명</label>
-                <Inp value={leg.name} placeholder="항목명"
-                  onChange={e=>setTempLeg(l=>l.map((x,i)=>i===li?{...x,name:e.target.value}:x))} />
-              </div>
-              <Btn sm v="danger" onClick={()=>delLegRow(li)} style={{marginTop:24}}>🗑️</Btn>
             </div>
           ))}
         </div>
