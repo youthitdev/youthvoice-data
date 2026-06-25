@@ -477,54 +477,37 @@ export default function App() {
         </button>
       </div>
 
-      {/* 간트 테이블 — 좌우 스와이프로 연도 전환 */}
-      <div
-        style={{overflowX:"auto",padding:"20px 24px 40px",cursor:"grab"}}
-        onMouseDown={e=>{
-          // 테이블 가로 스크롤 중이면 무시
-          swipeRef.current={active:true,startX:e.clientX,startYear:activeYear};
-        }}
-        onMouseMove={e=>{
-          const sw=swipeRef.current;
-          if(!sw.active) return;
-          const diff=sw.startX-e.clientX; // 왼쪽으로 밀면 +, 오른쪽으로 밀면 -
-          // 150px 이상 밀어야 연도 전환
-          if(diff>150){
-            const idx=YEARS.indexOf(sw.startYear);
-            if(idx<YEARS.length-1){ changeYear(YEARS[idx+1]); sw.active=false; }
-          } else if(diff<-150){
-            const idx=YEARS.indexOf(sw.startYear);
-            if(idx>0){ changeYear(YEARS[idx-1]); sw.active=false; }
-          }
-        }}
-        onMouseUp={()=>{swipeRef.current.active=false;}}
-        onMouseLeave={()=>{swipeRef.current.active=false;}}
-        onTouchStart={e=>{swipeRef.current={active:true,startX:e.touches[0].clientX,startYear:activeYear};}}
-        onTouchMove={e=>{
-          const sw=swipeRef.current;
-          if(!sw.active) return;
-          const diff=sw.startX-e.touches[0].clientX;
-          if(diff>100){
-            const idx=YEARS.indexOf(sw.startYear);
-            if(idx<YEARS.length-1){ changeYear(YEARS[idx+1]); sw.active=false; }
-          } else if(diff<-100){
-            const idx=YEARS.indexOf(sw.startYear);
-            if(idx>0){ changeYear(YEARS[idx-1]); sw.active=false; }
-          }
-        }}
-        onTouchEnd={()=>{swipeRef.current.active=false;}}>
-        <table style={{borderCollapse:"collapse",width:"100%",minWidth:1050}}>
+      {/* 간트 테이블 — 전체 연도 연결, 가로 스크롤 */}
+      <div style={{overflowX:"auto",padding:"20px 0 40px"}}>
+        <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead>
             <tr>
-              <th style={th("120px","center")}>Project</th>
-              <th style={th("200px","left",{paddingLeft:12})}>Program</th>
-              {MONTHS.map(m=><th key={m} style={th("auto","center")}>{m}</th>)}
-              <th style={th("70px","center")}>관리</th>
+              {/* 고정 컬럼 */}
+              <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white"}}>Project</th>
+              <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",boxShadow:"2px 0 4px rgba(0,0,0,0.06)"}}>Program</th>
+              {/* 연도×월 헤더 */}
+              {YEARS.map(y=>
+                MONTHS.map((m,mi)=>(
+                  <th key={`${y}-${mi}`} style={{
+                    ...th("64px","center"),
+                    background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
+                                mi===0?"#f0f7ff":"white",
+                    borderLeft: mi===0?"3px solid #2d3436":"none",
+                    color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
+                    fontSize:10,
+                    whiteSpace:"nowrap",
+                  }}>
+                    {mi===0?<><span style={{display:"block",fontSize:11,fontWeight:800,color:"#2d3436"}}>{y}</span>{m}</>:m}
+                  </th>
+                ))
+              )}
+              <th style={{...th("90px","center"),position:"sticky",right:0,zIndex:10,background:"white",boxShadow:"-2px 0 4px rgba(0,0,0,0.06)"}}>관리</th>
             </tr>
           </thead>
           <tbody>
+            {/* 프로젝트별 행 — 현재 연도 기준으로 렌더, 관리는 activeYear 데이터 */}
             {visData.length===0&&(
-              <tr><td colSpan={16}>
+              <tr><td colSpan={YEARS.length*12+3}>
                 <div style={{textAlign:"center",padding:60,color:"#b2bec3"}}>
                   <div style={{fontSize:40}}>📭</div>
                   <div style={{marginTop:12,fontSize:14}}>{activeYear}년 프로젝트가 없습니다.</div>
@@ -537,14 +520,16 @@ export default function App() {
               return [
                 ...proj.rows.map((row,ri)=>(
                   <tr key={`${pi}-${ri}`} style={{borderTop:ri===0?"3px solid #dfe6e9":"none"}}
-                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>td.style.background="#fafbfc")}
-                    onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>td.style.background="")}>
+                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="#fafbfc";})}
+                    onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="";})}>
+                    {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
-                      <td rowSpan={proj.rows.length+1} style={{
+                      <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
                         fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
                         borderRight:"2px solid #dfe6e9",borderBottom:"1px solid #f0f0f0",
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
-                        color:proj.color,borderLeft:`4px solid ${proj.color}`}}>
+                        color:proj.color,borderLeft:`4px solid ${proj.color}`,
+                        position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
                           <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color});setProjModal({idx:pi});}}
@@ -554,28 +539,66 @@ export default function App() {
                         </div>
                       </td>
                     )}
-                    <td style={{fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",borderRight:"1px solid #eee",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle"}}>{row.prog}</td>
-                    <td colSpan={12} style={{position:"relative",height:30,background:"white",borderBottom:"1px solid #f0f0f0",padding:0}}>
-                      {ri===0&&isCurrentYear&&<>
-                        <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
-                        <div style={{position:"absolute",top:1,left:`${todayPct}%`,fontSize:9,color:"#e17055",fontWeight:700,transform:"translateX(-50%)",pointerEvents:"none",whiteSpace:"nowrap"}}>오늘</div>
-                      </>}
-                      {row.bars.map((bar,bi)=>(
-                        <div key={bi}
-                          style={{position:"absolute",top:"50%",transform:"translateY(-50%)",height:17,borderRadius:3,
-                                  left:pct(bar.s),width:wPct(bar.s,bar.e),background:catColor(legend,bar.cat),
-                                  display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:2}}
-                          onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
-                            text:`${proj.proj.replace("\n"," ")} · ${row.prog}`+
-                                 (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
-                                 (bar.l?` · ${bar.l}`:"")})}
-                          onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
-                          onMouseLeave={()=>setTooltip(null)}>
-                          <span style={{fontSize:9,color:"white",fontWeight:700,overflow:"hidden",padding:"0 4px",whiteSpace:"nowrap"}}>{bar.l||""}</span>
-                        </div>
-                      ))}
+                    {/* 사업명 셀 (고정) */}
+                    <td data-sticky="1" style={{fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
+                        borderRight:"1px solid #eee",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
+                        position:"sticky",left:120,zIndex:3,boxShadow:"2px 0 4px rgba(0,0,0,0.04)"}}>
+                      {row.prog}
                     </td>
-                    <td style={{textAlign:"center",background:"white",borderBottom:"1px solid #f0f0f0",whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px"}}>
+                    {/* 연도×월 바 셀 */}
+                    {YEARS.map((y,yi)=>
+                      MONTHS.map((m,mi)=>{
+                        const isToday=y===THIS_YEAR&&mi+1===TODAY_MONTH;
+                        const isYearStart=mi===0;
+                        // 이 셀의 월 범위: [mi+1, mi+2) in float
+                        const cellS=mi+1, cellE=mi+2;
+                        return (
+                          <td key={`${y}-${mi}`} style={{
+                            position:"relative",height:30,padding:0,
+                            borderBottom:"1px solid #f0f0f0",
+                            borderLeft:isYearStart?"3px solid #dde":"1px solid #f5f5f5",
+                            background:isToday?"#fff5f5":"white",
+                            minWidth:64,width:64,
+                          }}>
+                            {/* 오늘 세로선 */}
+                            {isToday&&ri===0&&<>
+                              <div style={{position:"absolute",top:0,bottom:0,left:`${((TODAY_MONTH-1)/1)*0+50}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
+                            </>}
+                            {/* 해당 연도·월에 걸치는 바 렌더 */}
+                            {(allData[y]?.[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
+                              // bar.s, bar.e 는 월.소수 (1~13)
+                              // 이 셀(cellS~cellE)과 겹치는지
+                              const overlapS=Math.max(bar.s,cellS);
+                              const overlapE=Math.min(bar.e,cellE);
+                              if(overlapS>=overlapE) return null;
+                              const leftPct=((overlapS-cellS)/(cellE-cellS)*100).toFixed(2);
+                              const widthPct=((overlapE-overlapS)/(cellE-cellS)*100).toFixed(2);
+                              return (
+                                <div key={bi} style={{
+                                  position:"absolute",top:"50%",transform:"translateY(-50%)",
+                                  height:17,borderRadius:3,
+                                  left:`${leftPct}%`,width:`${widthPct}%`,
+                                  background:catColor(legend,bar.cat),
+                                  display:"flex",alignItems:"center",justifyContent:"center",
+                                  cursor:"pointer",zIndex:2,overflow:"hidden"}}
+                                  onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
+                                    text:`[${y}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
+                                         (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
+                                         (bar.l?` · ${bar.l}`:"")})}
+                                  onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
+                                  onMouseLeave={()=>setTooltip(null)}>
+                                  {overlapS===bar.s&&<span style={{fontSize:9,color:"white",fontWeight:700,padding:"0 3px",whiteSpace:"nowrap"}}>{bar.l||""}</span>}
+                                </div>
+                              );
+                            })}
+                          </td>
+                        );
+                      })
+                    )}
+                    {/* 관리 셀 (고정) */}
+                    <td data-sticky="1" style={{textAlign:"center",background:"white",borderBottom:"1px solid #f0f0f0",
+                        whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px",
+                        position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}>
                         <button title="위로" onClick={()=>moveProgram(pi,ri,-1)} disabled={ri===0}
                           style={{background:ri===0?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===0?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===0?"#b2bec3":"#636e72"}}>▲</button>
@@ -592,7 +615,7 @@ export default function App() {
                   </tr>
                 )),
                 <tr key={`${pi}-add`}>
-                  <td colSpan={14} style={{padding:"4px 10px 6px",background:"#f0fff8",borderBottom:"1px solid #f0f0f0"}}>
+                  <td colSpan={YEARS.length*12+3} style={{padding:"4px 10px 6px",background:"#f0fff8",borderBottom:"1px solid #f0f0f0"}}>
                     <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
                       style={{width:"100%",padding:5,fontSize:11,border:"1.5px dashed #b2bec3",borderRadius:5,background:"transparent",cursor:"pointer",color:"#636e72"}}
                       onMouseEnter={e=>{e.target.style.borderColor="#00b894";e.target.style.color="#00b894";}}
