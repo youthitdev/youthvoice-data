@@ -225,6 +225,9 @@ export default function App() {
   const [tempLeg,setTempLeg]     = useState([]);
   const saveTimer = useRef(null);
   const swipeRef = useRef({active:false, startX:0, startYear:null});
+  const chartRef = useRef(null);   // 차트 스크롤 컨테이너
+  const yearColWidth = 64;          // 각 월 셀 너비(px)
+  const fixedWidth = 120 + 200;     // Project + Program 고정 컬럼 너비
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -270,7 +273,16 @@ export default function App() {
   function upLeg(l) { setLegend(l); save(allData,l); }
 
   // 연도 변경시 필터 초기화
-  function changeYear(y) { setActiveYear(y); setFilter("all"); }
+  function changeYear(y) {
+    setActiveYear(y);
+    setFilter("all");
+    // 클릭한 연도의 첫 번째 월 위치로 스크롤
+    if(chartRef.current) {
+      const idx = YEARS.indexOf(y);
+      const scrollLeft = fixedWidth + idx * 12 * yearColWidth - 24;
+      chartRef.current.scrollTo({left: Math.max(0, scrollLeft), behavior:"smooth"});
+    }
+  }
 
   // 프로젝트
   function saveProject() {
@@ -478,7 +490,19 @@ export default function App() {
       </div>
 
       {/* 간트 테이블 — 전체 연도 연결, 가로 스크롤 */}
-      <div style={{overflowX:"auto",padding:"20px 0 40px"}}>
+      <div
+        ref={chartRef}
+        style={{overflowX:"auto",padding:"20px 0 40px"}}
+        onScroll={e=>{
+          // 스크롤 위치로 현재 보이는 연도 계산
+          const scrollLeft = e.currentTarget.scrollLeft;
+          const contentLeft = scrollLeft - fixedWidth;
+          const yearIdx = Math.max(0, Math.min(YEARS.length-1,
+            Math.floor(contentLeft / (12 * yearColWidth))
+          ));
+          const visibleYear = YEARS[yearIdx];
+          if(visibleYear !== activeYear) setActiveYear(visibleYear);
+        }}>
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead>
             <tr>
