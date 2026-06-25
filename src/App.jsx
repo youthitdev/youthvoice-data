@@ -224,6 +224,7 @@ export default function App() {
   const [tempProg,setTempProg]   = useState({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:null}});
   const [tempLeg,setTempLeg]     = useState([]);
   const saveTimer = useRef(null);
+  const dragState = useRef({dragging:false, startX:0, startYear:null});
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -367,25 +368,68 @@ export default function App() {
         </div>
       </div>
 
-      {/* 연도 탭 */}
-      <div style={{background:"#1e272e",display:"flex",alignItems:"center",overflowX:"auto",padding:"0 24px"}}>
+      {/* 연도 탭 — 드래그로 연도 전환 */}
+      <div
+        style={{background:"#1e272e",display:"flex",alignItems:"center",overflowX:"auto",padding:"0 12px",userSelect:"none",cursor:"grab",scrollbarWidth:"none"}}
+        onMouseDown={e=>{
+          dragState.current={dragging:false,startX:e.clientX,startYear:activeYear};
+          e.currentTarget.style.cursor="grabbing";
+        }}
+        onMouseMove={e=>{
+          const ds=dragState.current;
+          if(ds.startYear==null) return;
+          const diff=e.clientX-ds.startX;
+          if(Math.abs(diff)>8) ds.dragging=true;
+          if(!ds.dragging) return;
+          const idx=YEARS.indexOf(ds.startYear);
+          const step=Math.round(-diff/80); // 80px당 1년
+          const newIdx=Math.max(0,Math.min(YEARS.length-1,idx+step));
+          if(YEARS[newIdx]!==activeYear) changeYear(YEARS[newIdx]);
+        }}
+        onMouseUp={e=>{dragState.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
+        onMouseLeave={e=>{dragState.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
+        onTouchStart={e=>{dragState.current={dragging:false,startX:e.touches[0].clientX,startYear:activeYear};}}
+        onTouchMove={e=>{
+          const ds=dragState.current;
+          if(ds.startYear==null) return;
+          const diff=e.touches[0].clientX-ds.startX;
+          if(Math.abs(diff)>8) ds.dragging=true;
+          if(!ds.dragging) return;
+          const idx=YEARS.indexOf(ds.startYear);
+          const step=Math.round(-diff/80);
+          const newIdx=Math.max(0,Math.min(YEARS.length-1,idx+step));
+          if(YEARS[newIdx]!==activeYear) changeYear(YEARS[newIdx]);
+        }}
+        onTouchEnd={()=>{dragState.current={dragging:false,startX:0,startYear:null};}}>
+        {/* 이전 연도 화살표 */}
+        <button onClick={()=>{const i=YEARS.indexOf(activeYear);if(i>0)changeYear(YEARS[i-1]);}}
+          disabled={activeYear===YEARS[0]}
+          style={{background:"none",border:"none",color:activeYear===YEARS[0]?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.6)",
+                  fontSize:16,cursor:activeYear===YEARS[0]?"default":"pointer",padding:"10px 8px",flexShrink:0}}>‹</button>
         {YEARS.map(y=>{
           const yData=allData[y]||[];
           const hasProg=yData.some(p=>p.rows.length>0);
           return (
-            <button key={y} onClick={()=>changeYear(y)}
-              style={{padding:"10px 20px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
-                      whiteSpace:"nowrap",transition:"all 0.15s",borderBottom:"3px solid transparent",
-                      background:"transparent",
+            <button key={y}
+              onClick={e=>{if(!dragState.current.dragging)changeYear(y);}}
+              style={{padding:"10px 18px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
+                      whiteSpace:"nowrap",transition:"all 0.2s",borderBottom:"3px solid transparent",
+                      background:"transparent",flexShrink:0,
                       color:activeYear===y?"#00b894":"rgba(255,255,255,0.45)",
-                      borderBottomColor:activeYear===y?"#00b894":"transparent"}}>
+                      borderBottomColor:activeYear===y?"#00b894":"transparent",
+                      transform:activeYear===y?"scale(1.1)":"scale(1)"}}>
               {y}
-              {hasProg&&<span style={{marginLeft:5,fontSize:9,background:"#00b894",color:"white",borderRadius:8,padding:"1px 5px",fontWeight:600}}>
+              {hasProg&&<span style={{marginLeft:5,fontSize:9,background:activeYear===y?"#00b894":"rgba(255,255,255,0.3)",color:"white",borderRadius:8,padding:"1px 5px",fontWeight:600}}>
                 {yData.reduce((a,b)=>a+b.rows.length,0)}
               </span>}
             </button>
           );
         })}
+        {/* 다음 연도 화살표 */}
+        <button onClick={()=>{const i=YEARS.indexOf(activeYear);if(i<YEARS.length-1)changeYear(YEARS[i+1]);}}
+          disabled={activeYear===YEARS[YEARS.length-1]}
+          style={{background:"none",border:"none",color:activeYear===YEARS[YEARS.length-1]?"rgba(255,255,255,0.15)":"rgba(255,255,255,0.6)",
+                  fontSize:16,cursor:activeYear===YEARS[YEARS.length-1]?"default":"pointer",padding:"10px 8px",flexShrink:0}}>›</button>
       </div>
 
       {/* 통계 카드 */}
