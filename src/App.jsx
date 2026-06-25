@@ -299,13 +299,30 @@ export default function App() {
     if(!tempProg.name.trim()) return alert("사업명을 입력하세요.");
     const next=data.map(p=>({...p,rows:[...p.rows]}));
     const row={prog:tempProg.name.trim(),bars:tempProg.bars};
-    if(progModal.ri==null) next[progModal.pi].rows.push(row);
-    else next[progModal.pi].rows[progModal.ri]=row;
+    if(progModal.ri!=null) {
+      next[progModal.pi].rows[progModal.ri]=row; // 수정
+    } else if(progModal.insertAfter!=null) {
+      next[progModal.pi].rows.splice(progModal.insertAfter+1,0,row); // 중간 삽입
+    } else {
+      next[progModal.pi].rows.push(row); // 맨 뒤 추가
+    }
     upData(next); setProgModal(null);
   }
   function delProgram(pi,ri) {
     if(!confirm(`"${data[pi].rows[ri].prog}"를 삭제할까요?`)) return;
     upData(data.map((p,i)=>i!==pi?p:{...p,rows:p.rows.filter((_,j)=>j!==ri)}));
+  }
+  function moveProgram(pi,ri,dir) {
+    const next=data.map(p=>({...p,rows:[...p.rows]}));
+    const rows=next[pi].rows;
+    const newRi=ri+dir;
+    if(newRi<0||newRi>=rows.length) return;
+    [rows[ri],rows[newRi]]=[rows[newRi],rows[ri]];
+    upData(next);
+  }
+  function openAddProgramAt(pi,afterRi) {
+    setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null},insertAfter:afterRi});
+    setProgModal({pi,insertAfter:afterRi});
   }
 
   // 범례
@@ -451,9 +468,11 @@ export default function App() {
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
                         color:proj.color,borderLeft:`4px solid ${proj.color}`}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
-                        <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:4}}>
-                          <Btn sm v="edit" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color});setProjModal({idx:pi});}}>✏️ 수정</Btn>
-                          <Btn sm v="danger" onClick={()=>delProject(pi)}>🗑️ 삭제</Btn>
+                        <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
+                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color});setProjModal({idx:pi});}}
+                            style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>✏️</button>
+                          <button title="삭제" onClick={()=>delProject(pi)}
+                            style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>🗑️</button>
                         </div>
                       </td>
                     )}
@@ -479,9 +498,18 @@ export default function App() {
                       ))}
                     </td>
                     <td style={{textAlign:"center",background:"white",borderBottom:"1px solid #f0f0f0",whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px"}}>
-                      <Btn sm v="edit" style={{marginRight:3}}
-                        onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars)),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}>✏️</Btn>
-                      <Btn sm v="danger" onClick={()=>delProgram(pi,ri)}>🗑️</Btn>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}>
+                        <button title="위로" onClick={()=>moveProgram(pi,ri,-1)} disabled={ri===0}
+                          style={{background:ri===0?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===0?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===0?"#b2bec3":"#636e72"}}>▲</button>
+                        <button title="아래로" onClick={()=>moveProgram(pi,ri,1)} disabled={ri===data[pi].rows.length-1}
+                          style={{background:ri===data[pi].rows.length-1?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===data[pi].rows.length-1?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===data[pi].rows.length-1?"#b2bec3":"#636e72"}}>▼</button>
+                        <button title="아래에 사업 추가" onClick={()=>openAddProgramAt(pi,ri)}
+                          style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>＋</button>
+                        <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars)),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
+                          style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>✏️</button>
+                        <button title="삭제" onClick={()=>delProgram(pi,ri)}
+                          style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>🗑️</button>
+                      </div>
                     </td>
                   </tr>
                 )),
