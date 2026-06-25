@@ -108,6 +108,28 @@ function catColor(legend,id) { return legend.find(l=>l.id===id)?.color ?? "#b2be
 function catName(legend,id)  { return legend.find(l=>l.id===id)?.name ?? id ?? ""; }
 function uid() { return "cat_"+Date.now()+"_"+Math.random().toString(36).slice(2,6); }
 
+// 날짜(월/일) → 월.소수 변환 (예: "3/15" → 3.48)
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+function dateToMonthFloat(month, day) {
+  const daysInMonth = DAYS_IN_MONTH[month - 1];
+  return month + (day - 1) / daysInMonth;
+}
+// "3/15" 형태 파싱
+function parseDate(str) {
+  const m = str.trim().match(/^(\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (!m) return null;
+  const month = parseInt(m[1]), day = parseInt(m[2]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return dateToMonthFloat(month, day);
+}
+// 월.소수 → "M/D" 표시용 역변환
+function monthFloatToLabel(mf) {
+  const month = Math.floor(mf);
+  const daysInMonth = DAYS_IN_MONTH[Math.min(month,12) - 1];
+  const day = Math.round((mf - month) * daysInMonth) + 1;
+  return `${month}/${day}`;
+}
+
 // ── 공통 컴포넌트 ──────────────────────────────────────
 function Modal({ open, onClose, title, children, wide }) {
   if (!open) return null;
@@ -263,10 +285,21 @@ export default function App() {
 
   // ── 사업 ──
   function addTempBar() {
-    const s=parseFloat(tempProg.newBar.s), e=parseFloat(tempProg.newBar.e);
-    if(isNaN(s)||isNaN(e)||s>=e||s<1||e>13) return alert("시작/종료 월을 올바르게 입력하세요.\n예: 시작 3.5, 종료 5.0");
+    const sRaw = tempProg.newBar.s.trim();
+    const eRaw = tempProg.newBar.e.trim();
+    let s = parseDate(sRaw);
+    let e = parseDate(eRaw);
+    if(e !== null) {
+      const eMonth = Math.floor(e);
+      const eDays = DAYS_IN_MONTH[Math.min(eMonth,12)-1];
+      e = e + 1/eDays;
+    }
+    if(s===null||e===null) return alert("날짜를 올바르게 입력하세요.\n예: 시작 3/11, 종료 4/18");
+    if(s>=e) return alert("시작일이 종료일보다 늦습니다.");
     if(!tempProg.newBar.cat) return alert("구분을 선택하세요.");
-    setTempProg(p=>({...p,bars:[...p.bars,{s,e,cat:p.newBar.cat,l:p.newBar.l}],newBar:{s:"",e:"",l:"",cat:p.newBar.cat}}));
+    const autoLabel = `${sRaw}~${eRaw}`;
+    const label = tempProg.newBar.l.trim() || autoLabel;
+    setTempProg(p=>({...p,bars:[...p.bars,{s,e,cat:p.newBar.cat,l:label}],newBar:{s:"",e:"",l:"",cat:p.newBar.cat}}));
   }
   function saveProgram() {
     if(!tempProg.name.trim()) return alert("사업명을 입력하세요.");
@@ -537,22 +570,25 @@ export default function App() {
           </div>
         </FG>
         <div style={{background:"#f8f9fa",borderRadius:8,border:"1px solid #eee",padding:14,marginBottom:14}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#636e72",marginBottom:12}}>＋ 일정 추가</div>
+          <div style={{fontSize:12,fontWeight:700,color:"#636e72",marginBottom:4}}>＋ 일정 추가</div>
+          <div style={{fontSize:11,color:"#b2bec3",marginBottom:12}}>월/일 형식으로 입력하세요 (예: 3/11)</div>
           <div style={{display:"flex",gap:10,marginBottom:10}}>
             <div style={{flex:1}}>
-              <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>시작 (월.주차)</label>
-              <Inp value={tempProg.newBar.s} type="number" step="0.25" min="1" max="13" placeholder="예: 3.5"
+              <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>시작일</label>
+              <Inp value={tempProg.newBar.s} type="text" placeholder="예: 3/11"
                 onChange={e=>setTempProg(p=>({...p,newBar:{...p.newBar,s:e.target.value}}))} />
             </div>
             <div style={{flex:1}}>
-              <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>종료 (월.주차)</label>
-              <Inp value={tempProg.newBar.e} type="number" step="0.25" min="1" max="13" placeholder="예: 5.0"
+              <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>종료일</label>
+              <Inp value={tempProg.newBar.e} type="text" placeholder="예: 4/18"
                 onChange={e=>setTempProg(p=>({...p,newBar:{...p.newBar,e:e.target.value}}))} />
             </div>
           </div>
           <div style={{marginBottom:10}}>
-            <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>표시 텍스트 (선택)</label>
-            <Inp value={tempProg.newBar.l} placeholder="예: 3/11~3/20"
+            <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:4}}>
+              표시 텍스트 <span style={{fontWeight:400,color:"#b2bec3"}}>(비우면 날짜가 자동으로 표시)</span>
+            </label>
+            <Inp value={tempProg.newBar.l} placeholder="예: 모집 중 (비우면 3/11~4/18 자동 표시)"
               onChange={e=>setTempProg(p=>({...p,newBar:{...p.newBar,l:e.target.value}}))} />
           </div>
           <div style={{marginBottom:12}}>
