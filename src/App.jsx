@@ -224,7 +224,7 @@ export default function App() {
   const [tempProg,setTempProg]   = useState({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:null}});
   const [tempLeg,setTempLeg]     = useState([]);
   const saveTimer = useRef(null);
-  const dragState = useRef({dragging:false, startX:0, startYear:null});
+  const swipeRef = useRef({active:false, startX:0, startYear:null});
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -372,11 +372,11 @@ export default function App() {
       <div
         style={{background:"#1e272e",display:"flex",alignItems:"center",overflowX:"auto",padding:"0 12px",userSelect:"none",cursor:"grab",scrollbarWidth:"none"}}
         onMouseDown={e=>{
-          dragState.current={dragging:false,startX:e.clientX,startYear:activeYear};
+          swipeRef.current={dragging:false,startX:e.clientX,startYear:activeYear};
           e.currentTarget.style.cursor="grabbing";
         }}
         onMouseMove={e=>{
-          const ds=dragState.current;
+          const ds=swipeRef.current;
           if(ds.startYear==null) return;
           const diff=e.clientX-ds.startX;
           if(Math.abs(diff)>8) ds.dragging=true;
@@ -386,11 +386,11 @@ export default function App() {
           const newIdx=Math.max(0,Math.min(YEARS.length-1,idx+step));
           if(YEARS[newIdx]!==activeYear) changeYear(YEARS[newIdx]);
         }}
-        onMouseUp={e=>{dragState.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
-        onMouseLeave={e=>{dragState.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
-        onTouchStart={e=>{dragState.current={dragging:false,startX:e.touches[0].clientX,startYear:activeYear};}}
+        onMouseUp={e=>{swipeRef.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
+        onMouseLeave={e=>{swipeRef.current={dragging:false,startX:0,startYear:null};e.currentTarget.style.cursor="grab";}}
+        onTouchStart={e=>{swipeRef.current={dragging:false,startX:e.touches[0].clientX,startYear:activeYear};}}
         onTouchMove={e=>{
-          const ds=dragState.current;
+          const ds=swipeRef.current;
           if(ds.startYear==null) return;
           const diff=e.touches[0].clientX-ds.startX;
           if(Math.abs(diff)>8) ds.dragging=true;
@@ -400,7 +400,7 @@ export default function App() {
           const newIdx=Math.max(0,Math.min(YEARS.length-1,idx+step));
           if(YEARS[newIdx]!==activeYear) changeYear(YEARS[newIdx]);
         }}
-        onTouchEnd={()=>{dragState.current={dragging:false,startX:0,startYear:null};}}>
+        onTouchEnd={()=>{swipeRef.current={dragging:false,startX:0,startYear:null};}}>
         {/* 이전 연도 화살표 */}
         <button onClick={()=>{const i=YEARS.indexOf(activeYear);if(i>0)changeYear(YEARS[i-1]);}}
           disabled={activeYear===YEARS[0]}
@@ -411,7 +411,7 @@ export default function App() {
           const hasProg=yData.some(p=>p.rows.length>0);
           return (
             <button key={y}
-              onClick={e=>{if(!dragState.current.dragging)changeYear(y);}}
+              onClick={e=>{if(!false)changeYear(y);}}
               style={{padding:"10px 18px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
                       whiteSpace:"nowrap",transition:"all 0.2s",borderBottom:"3px solid transparent",
                       background:"transparent",flexShrink:0,
@@ -477,8 +477,42 @@ export default function App() {
         </button>
       </div>
 
-      {/* 간트 테이블 */}
-      <div style={{overflowX:"auto",padding:"20px 24px 40px"}}>
+      {/* 간트 테이블 — 좌우 스와이프로 연도 전환 */}
+      <div
+        style={{overflowX:"auto",padding:"20px 24px 40px",cursor:"grab"}}
+        onMouseDown={e=>{
+          // 테이블 가로 스크롤 중이면 무시
+          swipeRef.current={active:true,startX:e.clientX,startYear:activeYear};
+        }}
+        onMouseMove={e=>{
+          const sw=swipeRef.current;
+          if(!sw.active) return;
+          const diff=sw.startX-e.clientX; // 왼쪽으로 밀면 +, 오른쪽으로 밀면 -
+          // 150px 이상 밀어야 연도 전환
+          if(diff>150){
+            const idx=YEARS.indexOf(sw.startYear);
+            if(idx<YEARS.length-1){ changeYear(YEARS[idx+1]); sw.active=false; }
+          } else if(diff<-150){
+            const idx=YEARS.indexOf(sw.startYear);
+            if(idx>0){ changeYear(YEARS[idx-1]); sw.active=false; }
+          }
+        }}
+        onMouseUp={()=>{swipeRef.current.active=false;}}
+        onMouseLeave={()=>{swipeRef.current.active=false;}}
+        onTouchStart={e=>{swipeRef.current={active:true,startX:e.touches[0].clientX,startYear:activeYear};}}
+        onTouchMove={e=>{
+          const sw=swipeRef.current;
+          if(!sw.active) return;
+          const diff=sw.startX-e.touches[0].clientX;
+          if(diff>100){
+            const idx=YEARS.indexOf(sw.startYear);
+            if(idx<YEARS.length-1){ changeYear(YEARS[idx+1]); sw.active=false; }
+          } else if(diff<-100){
+            const idx=YEARS.indexOf(sw.startYear);
+            if(idx>0){ changeYear(YEARS[idx-1]); sw.active=false; }
+          }
+        }}
+        onTouchEnd={()=>{swipeRef.current.active=false;}}>
         <table style={{borderCollapse:"collapse",width:"100%",minWidth:1050}}>
           <thead>
             <tr>
