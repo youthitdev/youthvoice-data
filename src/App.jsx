@@ -147,6 +147,10 @@ export default function App(){
 
   const saveTimer = useRef(null);
   const data = allData[activeYear]||[];
+  const dragProj = useRef(null);
+  const dragProg = useRef(null);
+  const [dragOverProj, setDragOverProj] = useState(null);
+  const [dragOverProg, setDragOverProg] = useState(null);
 
   // 로드
   useEffect(()=>{
@@ -185,6 +189,32 @@ export default function App(){
     },500);
     setCatModal(false);
   }
+
+  // 드래그 — 프로젝트
+  function onProjDragStart(pi){ dragProj.current=pi; }
+  function onProjDragOver(e,pi){ e.preventDefault(); setDragOverProj(pi); }
+  function onProjDrop(pi){
+    const from=dragProj.current;
+    if(from==null||from===pi){ setDragOverProj(null); dragProj.current=null; return; }
+    const next=[...data];
+    const [moved]=next.splice(from,1);
+    next.splice(pi,0,moved);
+    upData(next); setDragOverProj(null); dragProj.current=null;
+  }
+  function onProjDragEnd(){ setDragOverProj(null); dragProj.current=null; }
+
+  // 드래그 — 프로그램
+  function onProgDragStart(pi,ri){ dragProg.current={pi,ri}; }
+  function onProgDragOver(e,pi,ri){ e.preventDefault(); setDragOverProg({pi,ri}); }
+  function onProgDrop(pi,ri){
+    const from=dragProg.current;
+    if(!from||from.pi!==pi||from.ri===ri){ setDragOverProg(null); dragProg.current=null; return; }
+    const next=data.map(p=>({...p,rows:[...p.rows]}));
+    const [moved]=next[pi].rows.splice(from.ri,1);
+    next[pi].rows.splice(ri,0,moved);
+    upData(next); setDragOverProg(null); dragProg.current=null;
+  }
+  function onProgDragEnd(){ setDragOverProg(null); dragProg.current=null; }
 
   // 프로젝트
   function saveProject(){
@@ -355,12 +385,27 @@ export default function App(){
               </tr>
             ]:proj.rows.map((row,ri)=>(
               <tr key={`${pi}-${ri}`}
-                onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="#f5f9ff";})}
+                draggable
+                onDragStart={()=>onProgDragStart(pi,ri)}
+                onDragOver={e=>onProgDragOver(e,pi,ri)}
+                onDrop={()=>onProgDrop(pi,ri)}
+                onDragEnd={onProgDragEnd}
+                style={{background:dragOverProg?.pi===pi&&dragOverProg?.ri===ri?"#e8f8f5":"",cursor:"grab"}}
+                onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragProg.current)td.style.background="#f5f9ff";})}
                 onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="transparent";})}>
-                {ri===0&&<td data-sticky="1" rowSpan={proj.rows.length+1} style={{
+                {ri===0&&<td data-sticky="1" rowSpan={proj.rows.length+1}
+                  draggable
+                  onDragStart={e=>{e.stopPropagation();onProjDragStart(pi);}}
+                  onDragOver={e=>onProjDragOver(e,pi)}
+                  onDrop={()=>onProjDrop(pi)}
+                  onDragEnd={onProjDragEnd}
+                  style={{
                     width:110,minWidth:110,textAlign:"center",verticalAlign:"middle",
-                    background:`${proj.color}15`,border:"none",borderLeft:`4px solid ${proj.color}`,
-                    padding:8,position:"sticky",left:0,zIndex:3}}>
+                    background:dragOverProj===pi?`${proj.color}35`:`${proj.color}15`,
+                    border:"none",borderLeft:`4px solid ${proj.color}`,
+                    padding:8,position:"sticky",left:0,zIndex:3,cursor:"grab",
+                    transition:"background 0.15s"}}>
+                  <div style={{fontSize:9,color:proj.color,opacity:0.5,marginBottom:2}}>⠿ 드래그</div>
                   <div style={{fontSize:11,fontWeight:700,color:proj.color,lineHeight:1.5}}>
                     {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                   </div>
@@ -370,9 +415,9 @@ export default function App(){
                     {proj.manager2&&<div style={{opacity:0.7}}>부 {proj.manager2}</div>}
                   </div>}
                   <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
-                    <button onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,partner:proj.partner||"",manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
+                    <button onClick={e=>{e.stopPropagation();setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,partner:proj.partner||"",manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
                       style={{background:"#74b9ff",border:"none",borderRadius:5,cursor:"pointer",padding:"3px 7px",fontSize:12}}>✏️</button>
-                    <button onClick={()=>delProject(pi)}
+                    <button onClick={e=>{e.stopPropagation();delProject(pi);}}
                       style={{background:"#e17055",border:"none",borderRadius:5,cursor:"pointer",padding:"3px 7px",fontSize:12,color:"white"}}>🗑️</button>
                   </div>
                 </td>}
