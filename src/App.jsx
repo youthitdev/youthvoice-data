@@ -479,8 +479,8 @@ export default function App(){
           {tempProg.bars.length===0
             ?<div style={{padding:12,color:"#b2bec3",fontSize:12,textAlign:"center"}}>아래에서 일정을 추가하세요.</div>
             :tempProg.bars.map((b,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:"1px solid #f0f0f0"}}>
-              <div style={{width:24,height:14,borderRadius:3,background:catColor(b.cat),flexShrink:0}}/>
-              <div style={{flex:1,fontSize:12}}>{floatToLabel(b.s)}~{floatToLabel(b.e)} {b.l?`· ${b.l}`:""} <span style={{fontSize:10,color:"#888"}}>[{catName(b.cat)}]</span></div>
+              <div style={{width:24,height:14,borderRadius:3,background:catColor(cats,b.cat),flexShrink:0}}/>
+              <div style={{flex:1,fontSize:12}}>{floatToLabel(b.s)}~{floatToLabel(b.e)} {b.l?`· ${b.l}`:""} <span style={{fontSize:10,color:"#888"}}>[{catName(cats,b.cat)}]</span></div>
               <button onClick={()=>setTempProg(p=>({...p,bars:p.bars.filter((_,j)=>j!==i)}))} style={{background:"none",border:"none",cursor:"pointer",color:"#b2bec3",fontSize:14}}>✕</button>
             </div>)
           }
