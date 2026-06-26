@@ -356,7 +356,11 @@ export default function App() {
   const isCurrentYear=activeYear===THIS_YEAR;
   const activeCount=isCurrentYear?data.reduce((s,p)=>s+p.rows.filter(r=>r.bars.some(b=>b.s<=TODAY_MONTH&&b.e>=TODAY_MONTH)).length,0):0;
   const todayPct=((TODAY_MONTH-1)/NCOLS*100).toFixed(2);
-  const visData=activeFilter==="all"?data.map((p,i)=>({...p,_i:i})):data.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(activeFilter));
+  // 행 기준: 2026 데이터(baseData)를 행으로 사용. 필터는 activeYear 데이터 기준.
+  const baseData = allData[THIS_YEAR] || [];
+  const visData = activeFilter==="all"
+    ? baseData.map((p,i)=>({...p,_i:i}))
+    : baseData.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(activeFilter));
 
   if(loading) return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16}}>
@@ -465,7 +469,7 @@ export default function App() {
       {/* 필터 */}
       <div style={{display:"flex",gap:8,padding:"10px 24px",background:"white",borderBottom:"1px solid #eee",flexWrap:"wrap",alignItems:"center"}}>
         <span style={{fontSize:12,color:"#636e72",fontWeight:600,marginRight:4}}>필터:</span>
-        {[{key:"all",label:"전체",color:null},...data.map((p,i)=>({key:String(i),label:p.proj.replace("\n"," "),color:p.color}))].map(f=>(
+        {[{key:"all",label:"전체",color:null},...baseData.map((p,i)=>({key:String(i),label:p.proj.replace("\n"," "),color:p.color}))].map(f=>(
           <button key={f.key} onClick={()=>setFilter(f.key)}
             style={{padding:"5px 13px",borderRadius:20,border:`1.5px solid ${activeFilter===f.key?"#2d3436":"#dfe6e9"}`,
                     background:activeFilter===f.key?"#2d3436":"white",color:activeFilter===f.key?"white":"#636e72",
@@ -536,11 +540,11 @@ export default function App() {
           </thead>
           <tbody>
             {/* 프로젝트별 행 — 현재 연도 기준으로 렌더, 관리는 activeYear 데이터 */}
-            {visData.length===0&&(
+            {baseData.length===0&&(
               <tr><td colSpan={YEARS.length*12+3}>
                 <div style={{textAlign:"center",padding:60,color:"#b2bec3"}}>
                   <div style={{fontSize:40}}>📭</div>
-                  <div style={{marginTop:12,fontSize:14}}>{activeYear}년 프로젝트가 없습니다.</div>
+                  <div style={{marginTop:12,fontSize:14}}>프로젝트가 없습니다.</div>
                   <div style={{marginTop:6,fontSize:12}}>위의 "+ 프로젝트 추가" 버튼으로 시작하세요!</div>
                 </div>
               </td></tr>
