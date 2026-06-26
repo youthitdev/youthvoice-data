@@ -521,24 +521,33 @@ export default function App(){
 
     {/* 구분 관리 모달 */}
     <Modal open={catModal} onClose={()=>setCatModal(false)} title="🎨 구분 관리">
-      <p style={{fontSize:12,color:"#888",marginBottom:14,lineHeight:1.6}}>구분 항목을 추가·수정·삭제할 수 있어요. 저장하면 즉시 반영됩니다.</p>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+      <p style={{fontSize:12,color:"#888",marginBottom:14,lineHeight:1.6}}>색상 점을 클릭해서 색상을 바꾸거나, 이름을 수정하세요.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
         {tempCats.map((cat,ci)=>(
-          <div key={cat.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#f8f9fa",borderRadius:8,border:"1px solid #eee"}}>
-            <div style={{flexShrink:0}}>
-              <ColorPicker value={cat.color} onChange={c=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,color:c}:x))}/>
-            </div>
-            <div style={{flex:1}}>
-              <label style={{fontSize:11,color:"#888",display:"block",marginBottom:4}}>항목명</label>
-              <Inp value={cat.name} placeholder="항목명" onChange={e=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,name:e.target.value}:x))}/>
-            </div>
+          <div key={cat.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#f8f9fa",borderRadius:8,border:"1px solid #eee"}}>
+            {/* 색상 점 — 클릭하면 color input 열림 */}
+            <label style={{cursor:"pointer",flexShrink:0,position:"relative"}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:cat.color,border:"2px solid rgba(0,0,0,0.1)",boxShadow:"0 1px 3px rgba(0,0,0,0.15)"}}/>
+              <input type="color" value={cat.color}
+                onChange={e=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,color:e.target.value}:x))}
+                style={{position:"absolute",opacity:0,width:0,height:0,top:0,left:0,cursor:"pointer"}}/>
+            </label>
+            <input value={cat.name} placeholder="항목명"
+              onChange={e=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,name:e.target.value}:x))}
+              style={{flex:1,padding:"6px 10px",border:"1.5px solid #dfe6e9",borderRadius:6,fontSize:13,outline:"none",background:"white"}}
+              onFocus={e=>e.target.style.borderColor="#00b894"} onBlur={e=>e.target.style.borderColor="#dfe6e9"}/>
             <button onClick={()=>setTempCats(l=>l.filter((_,i)=>i!==ci))}
-              style={{background:"#fab1a0",border:"none",borderRadius:5,cursor:"pointer",padding:"4px 8px",fontSize:12,flexShrink:0}}>🗑️</button>
+              style={{background:"none",border:"none",cursor:"pointer",color:"#ccc",fontSize:16,padding:"0 4px",flexShrink:0}}
+              onMouseEnter={e=>e.target.style.color="#e17055"} onMouseLeave={e=>e.target.style.color="#ccc"}>✕</button>
           </div>
         ))}
       </div>
-      <Btn onClick={()=>setTempCats(l=>[...l,{id:"cat_"+Date.now(),name:"새 항목",color:PRESET_COLORS[Math.floor(Math.random()*PRESET_COLORS.length)]}])}
-        color="#55efc4" textColor="#2d3436" style={{width:"100%",padding:9,marginBottom:4}}>+ 항목 추가</Btn>
+      <button onClick={()=>setTempCats(l=>[...l,{id:"cat_"+Date.now(),name:"새 항목",color:PRESET_COLORS[Math.floor(Math.random()*PRESET_COLORS.length)]}])}
+        style={{width:"100%",padding:"8px",border:"1.5px dashed #b2bec3",borderRadius:8,background:"transparent",cursor:"pointer",fontSize:12,color:"#636e72",marginBottom:4}}
+        onMouseEnter={e=>{e.target.style.borderColor="#00b894";e.target.style.color="#00b894";}}
+        onMouseLeave={e=>{e.target.style.borderColor="#b2bec3";e.target.style.color="#636e72";}}>
+        + 항목 추가
+      </button>
       <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:14}}>
         <Btn onClick={()=>setCatModal(false)} color="#f5f6fa" textColor="#636e72">취소</Btn>
         <Btn onClick={()=>saveCatsAndClose(tempCats)}>저장</Btn>
