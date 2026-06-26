@@ -673,7 +673,7 @@ export default function App() {
                     )}
                     {/* 사업명 셀 (고정) */}
                     <td data-sticky="1" style={{width:180,minWidth:180,fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
-                        border:"none",borderBottom:"none",verticalAlign:"middle",
+                        border:"none",verticalAlign:"middle",
                         position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>
                       {row.prog}
                     </td>
@@ -710,7 +710,7 @@ export default function App() {
                                   left:`${leftPct}%`,width:`${widthPct}%`,
                                   background:catColor(legend,bar.cat),
                                   display:"flex",alignItems:"center",justifyContent:"center",
-                                  cursor:"pointer",zIndex:2,overflow:"hidden",
+                                  cursor:"pointer",zIndex:2,overflow:"visible",
                                   boxShadow:"0 1px 3px rgba(0,0,0,0.15)"}}
                                   onClick={()=>openBarEdit(pi,ri,bi,y)}
                                   onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
@@ -719,7 +719,7 @@ export default function App() {
                                          (bar.l?` · ${bar.l}`:"")+" (클릭하여 수정)"})}
                                   onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
                                   onMouseLeave={()=>setTooltip(null)}>
-                                  <span style={{fontSize:10,color:"white",fontWeight:700,padding:"0 6px",textAlign:"center",width:"100%",display:"block"}}>{overlapS===bar.s?(bar.l||""):""}</span>
+                                  {overlapS===bar.s&&bar.l&&<span style={{fontSize:10,color:"white",fontWeight:600,padding:"0 6px",whiteSpace:"nowrap",letterSpacing:"-0.2px"}}>{bar.l}</span>}
                                 </div>
                               );
                             })}
