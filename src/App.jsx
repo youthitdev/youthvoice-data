@@ -522,8 +522,8 @@ export default function App() {
           <thead>
             <tr>
               {/* 고정 컬럼 */}
-              <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white"}}>Project</th>
-              <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",boxShadow:"2px 0 4px rgba(0,0,0,0.06)"}}>Program</th>
+              <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white",borderRight:"none"}}>Project</th>
+              <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",borderLeft:"none",boxShadow:"3px 0 6px rgba(0,0,0,0.07)"}}>Program</th>
               {/* 연도×월 헤더 — 전체 렌더 (고정) */}
               {YEARS.map((y,yi)=>
                 MONTHS.map((m,mi)=>(
@@ -568,7 +568,7 @@ export default function App() {
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
                         fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
-                        borderRight:"2px solid #dfe6e9",borderBottom:"1px solid #f0f0f0",
+                        borderRight:"none",borderBottom:"1px solid #f0f0f0",
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
                         color:proj.color,borderLeft:`4px solid ${proj.color}`,
                         position:"sticky",left:0,zIndex:3}}>
@@ -583,8 +583,8 @@ export default function App() {
                     )}
                     {/* 사업명 셀 (고정) */}
                     <td data-sticky="1" style={{fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
-                        borderRight:"1px solid #eee",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
-                        position:"sticky",left:120,zIndex:3,boxShadow:"2px 0 4px rgba(0,0,0,0.04)"}}>
+                        borderLeft:"none",borderRight:"none",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
+                        position:"sticky",left:120,zIndex:3,boxShadow:"3px 0 6px rgba(0,0,0,0.07)"}}>
                       {row.prog}
                     </td>
                     {/* 연도×월 바 셀 */}
