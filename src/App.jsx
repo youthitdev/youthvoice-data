@@ -612,8 +612,8 @@ export default function App() {
                     ref={yi===0&&mi===0?firstYearColRef:null}
                     style={{
                       ...th(`${cellWidth}px`,"center"),
-                      background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
-                                  mi===0?"#f0f7ff":"white",
+                      background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"rgba(225,112,85,0.07)":
+                                  mi===0?"#f8f9fa":"white",
                       borderLeft: mi===0?"3px solid #b2bec3":"none",
                       color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
                       fontSize:10, whiteSpace:"nowrap",
@@ -652,8 +652,8 @@ export default function App() {
                     style={{borderTop:"none",
                             background:dragOver?.pi===pi&&dragOver?.ri===ri?"#e8f8f5":"",
                             transition:"background 0.1s"}}
-                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#fafbfc";})}
-                    onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="";})}>
+                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#f0f8ff";})}
+                    onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="transparent";})}>
                     {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
@@ -689,7 +689,7 @@ export default function App() {
                             position:"relative",height:36,padding:0,
                             borderBottom:"none",
                             borderLeft:isYearStart?"2px solid #dfe6e9":"none",
-                            background:isToday?"#fff8f5":"white",
+                            background:isToday?"rgba(225,112,85,0.07)":"transparent",
                             minWidth:cellWidth,width:cellWidth,
                           }}>
                             {/* 오늘 세로선 */}
@@ -719,7 +719,7 @@ export default function App() {
                                          (bar.l?` · ${bar.l}`:"")+" (클릭하여 수정)"})}
                                   onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
                                   onMouseLeave={()=>setTooltip(null)}>
-                                  {overlapS===bar.s&&<span style={{fontSize:9,color:"white",fontWeight:700,padding:"0 3px",whiteSpace:"nowrap"}}>{bar.l||""}</span>}
+                                  <span style={{fontSize:10,color:"white",fontWeight:700,padding:"0 6px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textAlign:"center",width:"100%",display:"block"}}>{overlapS===bar.s?(bar.l||""):""}</span>
                                 </div>
                               );
                             })}
