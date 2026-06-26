@@ -719,7 +719,7 @@ export default function App() {
                                          (bar.l?` · ${bar.l}`:"")+" (클릭하여 수정)"})}
                                   onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
                                   onMouseLeave={()=>setTooltip(null)}>
-                                  <span style={{fontSize:10,color:"white",fontWeight:700,padding:"0 6px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textAlign:"center",width:"100%",display:"block"}}>{overlapS===bar.s?(bar.l||""):""}</span>
+                                  <span style={{fontSize:10,color:"white",fontWeight:700,padding:"0 6px",whiteSpace:"nowrap",overflow:"hidden",textAlign:"center",width:"100%",display:"block"}}>{overlapS===bar.s?(bar.l||""):""}</span>
                                 </div>
                               );
                             })}
