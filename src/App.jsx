@@ -232,9 +232,10 @@ export default function App(){
   function addTempBar(){
     const sRaw=tempProg.newBar.s.trim(), eRaw=tempProg.newBar.e.trim();
     let s=parseDate(sRaw), e=parseDate(eRaw);
-    if(e!==null){ const em=Math.floor(e); e=e+1/DAYS[Math.min(em,12)-1]; }
     if(s===null||e===null) return alert("날짜를 올바르게 입력하세요.\n예: 3/11");
-    if(s>=e) return alert("시작일이 종료일보다 늦습니다.");
+    if(s>e) return alert("시작일이 종료일보다 늦습니다.");
+    // 같은 날이면 하루짜리로 처리 (표시용으로 조금 늘림)
+    if(s===e){ const em=Math.floor(e); e=e+1/DAYS[Math.min(em,12)-1]; }
     const l=tempProg.newBar.l.trim()||`${sRaw}~${eRaw}`;
     setTempProg(p=>({...p,bars:[...p.bars,{s,e,cat:p.newBar.cat,l}],newBar:{s:"",e:"",l:"",cat:p.newBar.cat}}));
   }
@@ -252,16 +253,14 @@ export default function App(){
   function openBarModal(pi,ri,bi){
     const bar=data[pi]?.rows[ri]?.bars[bi];
     if(!bar) return;
-    const eMonth=Math.floor(bar.e);
-    const eAdj=bar.e-1/DAYS[Math.min(eMonth,12)-1];
-    setTempBar({...bar,pi,ri,bi,sStr:floatToLabel(bar.s),eStr:floatToLabel(eAdj)});
+    setTempBar({...bar,pi,ri,bi,sStr:floatToLabel(bar.s),eStr:floatToLabel(bar.e)});
     setBarModal({pi,ri,bi});
   }
   function saveBar(){
     const s=parseDate(tempBar.sStr), eRaw=parseDate(tempBar.eStr);
     if(s===null||eRaw===null) return alert("날짜를 올바르게 입력하세요.");
-    const em=Math.floor(eRaw); const e=eRaw+1/DAYS[Math.min(em,12)-1];
-    if(s>=e) return alert("시작일이 종료일보다 늦습니다.");
+    const e=eRaw;
+    if(s>e) return alert("시작일이 종료일보다 늦습니다.");
     const next=data.map(p=>({...p,rows:p.rows.map(r=>({...r,bars:[...r.bars]}))}));
     next[barModal.pi].rows[barModal.ri].bars[barModal.bi]={s,e,cat:tempBar.cat,l:tempBar.l};
     upData(next); setBarModal(null); setTempBar(null);
@@ -525,7 +524,7 @@ export default function App(){
             ?<div style={{padding:12,color:"#b2bec3",fontSize:12,textAlign:"center"}}>아래에서 일정을 추가하세요.</div>
             :tempProg.bars.map((b,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:"1px solid #f0f0f0"}}>
               <div style={{width:24,height:14,borderRadius:3,background:catColor(cats,b.cat),flexShrink:0}}/>
-              <div style={{flex:1,fontSize:12}}>{floatToLabel(b.s)}~{floatToLabel(b.e)} {b.l?`· ${b.l}`:""} <span style={{fontSize:10,color:"#888"}}>[{catName(cats,b.cat)}]</span></div>
+              <div style={{flex:1,fontSize:12}}>{floatToLabel(b.s)}~{floatToLabel(b.e)}{b.l?` · ${b.l}`:""} <span style={{fontSize:10,color:"#888"}}>[{catName(cats,b.cat)}]</span></div>
               <button onClick={()=>setTempProg(p=>({...p,bars:p.bars.filter((_,j)=>j!==i)}))} style={{background:"none",border:"none",cursor:"pointer",color:"#b2bec3",fontSize:14}}>✕</button>
             </div>)
           }
