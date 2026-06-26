@@ -300,8 +300,8 @@ export default function App() {
   function saveProject() {
     if(!tempProj.name.trim()) return alert("프로젝트명을 입력하세요.");
     const next=[...data];
-    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,manager:tempProj.manager||"",rows:[]});
-    else next[projModal.idx]={...next[projModal.idx],proj:tempProj.name.trim(),color:tempProj.color,manager:tempProj.manager||""};
+    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,manager1:tempProj.manager1||"",manager2:tempProj.manager2||"",rows:[]});
+    else next[projModal.idx]={...next[projModal.idx],proj:tempProj.name.trim(),color:tempProj.color,manager1:tempProj.manager1||"",manager2:tempProj.manager2||""};
     upData(next); setProjModal(null); setFilter("all");
   }
   function delProject(pi) {
@@ -451,7 +451,7 @@ export default function App() {
               style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,lineHeight:1,padding:"0 2px"}}>↺</button>
           </div>
           <Btn v="legend" onClick={()=>{setTempLeg(JSON.parse(JSON.stringify(legend)));setLegModal(true);}}>🎨 범례 관리</Btn>
-          <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],manager:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
+          <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],manager1:"",manager2:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
         </div>
       </div>
 
@@ -657,14 +657,15 @@ export default function App() {
                     {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
-                        width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
+                        width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",
+                        background:`${proj.color}18`,
                         border:"none",borderLeft:`4px solid ${proj.color}`,
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
                         color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
-                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,manager:proj.manager||""});setProjModal({idx:pi});}}
+                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
                             style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>✏️</button>
                           <button title="삭제" onClick={()=>delProject(pi)}
                             style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>🗑️</button>
@@ -762,7 +763,7 @@ export default function App() {
                   </tr>
                 )),
                 <tr key={`${pi}-add`}>
-                  <td colSpan={YEARS.length*12+3} style={{padding:"6px 10px 6px",background:"#f0f2f5",borderTop:"3px solid #dfe6e9",borderBottom:"3px solid #dfe6e9"}}>
+                  <td colSpan={YEARS.length*12+3} style={{padding:"8px 10px",background:"#edf0f4",borderTop:"4px solid #b2bec3",borderBottom:"4px solid #b2bec3"}}>
                     <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
                       style={{width:"100%",padding:5,fontSize:11,border:"1.5px dashed #b2bec3",borderRadius:5,background:"transparent",cursor:"pointer",color:"#636e72"}}
                       onMouseEnter={e=>{e.target.style.borderColor="#00b894";e.target.style.color="#00b894";}}
@@ -831,9 +832,19 @@ export default function App() {
           <Inp value={tempProj.name} placeholder="예: TMI 프로젝트 (바보의나눔)"
             onChange={e=>setTempProj(p=>({...p,name:e.target.value}))} />
         </FG>
-        <FG label="담당자 (선택)">
-          <Inp value={tempProj.manager||""} placeholder="예: 홍길동"
-            onChange={e=>setTempProj(p=>({...p,manager:e.target.value}))} />
+        <FG label="담당자">
+          <div style={{display:"flex",gap:10}}>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:"#888",display:"block",marginBottom:4}}>정 담당자</label>
+              <Inp value={tempProj.manager1||""} placeholder="예: 홍길동"
+                onChange={e=>setTempProj(p=>({...p,manager1:e.target.value}))} />
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:"#888",display:"block",marginBottom:4}}>부 담당자</label>
+              <Inp value={tempProj.manager2||""} placeholder="예: 김철수"
+                onChange={e=>setTempProj(p=>({...p,manager2:e.target.value}))} />
+            </div>
+          </div>
         </FG>
         <FG label="대표 색상">
           <ColorPicker value={tempProj.color} onChange={c=>setTempProj(p=>({...p,color:c}))} />
