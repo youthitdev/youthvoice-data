@@ -649,7 +649,7 @@ export default function App() {
                     onDragOver={e=>handleDragOver(e,pi,ri)}
                     onDrop={()=>handleDrop(pi,ri)}
                     onDragEnd={handleDragEnd}
-                    style={{borderTop:ri===0?"3px solid #dfe6e9":"none",
+                    style={{borderTop:"none",
                             background:dragOver?.pi===pi&&dragOver?.ri===ri?"#e8f8f5":"",
                             transition:"background 0.1s"}}
                     onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#fafbfc";})}
@@ -658,7 +658,7 @@ export default function App() {
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
                         width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
-                        border:"none",borderBottom:"1px solid #f0f0f0",borderLeft:`4px solid ${proj.color}`,
+                        border:"none",borderLeft:`4px solid ${proj.color}`,
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
                         color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
@@ -673,7 +673,7 @@ export default function App() {
                     )}
                     {/* 사업명 셀 (고정) */}
                     <td data-sticky="1" style={{width:180,minWidth:180,fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
-                        border:"none",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
+                        border:"none",borderBottom:"none",verticalAlign:"middle",
                         position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>
                       {row.prog}
                     </td>
@@ -686,9 +686,9 @@ export default function App() {
                         const cellS=mi+1, cellE=mi+2;
                         return (
                           <td key={`${y}-${mi}`} style={{
-                            position:"relative",height:30,padding:0,
-                            borderBottom:"1px solid #f0f0f0",
-                            borderLeft:isYearStart?"3px solid #b2bec3":"none",
+                            position:"relative",height:36,padding:0,
+                            borderBottom:"none",
+                            borderLeft:isYearStart?"2px solid #dfe6e9":"none",
                             background:isToday?"#fff8f5":"white",
                             minWidth:cellWidth,width:cellWidth,
                           }}>
@@ -706,11 +706,12 @@ export default function App() {
                               return (
                                 <div key={bi} style={{
                                   position:"absolute",top:"50%",transform:"translateY(-50%)",
-                                  height:17,borderRadius:3,
+                                  height:20,borderRadius:4,
                                   left:`${leftPct}%`,width:`${widthPct}%`,
                                   background:catColor(legend,bar.cat),
                                   display:"flex",alignItems:"center",justifyContent:"center",
-                                  cursor:"pointer",zIndex:2,overflow:"hidden"}}
+                                  cursor:"pointer",zIndex:2,overflow:"hidden",
+                                  boxShadow:"0 1px 3px rgba(0,0,0,0.15)"}}
                                   onClick={()=>openBarEdit(pi,ri,bi,y)}
                                   onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
                                     text:`[${y}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
@@ -727,7 +728,7 @@ export default function App() {
                       })
                     )}
                     {/* 관리 셀 (고정) */}
-                    <td data-sticky="1" style={{textAlign:"center",background:"white",borderBottom:"1px solid #f0f0f0",
+                    <td data-sticky="1" style={{textAlign:"center",background:"white",borderBottom:"none",
                         whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px",
                         position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
@@ -743,7 +744,7 @@ export default function App() {
                   </tr>
                 )),
                 <tr key={`${pi}-add`}>
-                  <td colSpan={YEARS.length*12+3} style={{padding:"4px 10px 6px",background:"#f0fff8",borderBottom:"1px solid #f0f0f0"}}>
+                  <td colSpan={YEARS.length*12+3} style={{padding:"4px 10px 8px",background:"#f8f9fa",borderTop:"2px solid #dfe6e9",borderBottom:"2px solid #dfe6e9"}}>
                     <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
                       style={{width:"100%",padding:5,fontSize:11,border:"1.5px dashed #b2bec3",borderRadius:5,background:"transparent",cursor:"pointer",color:"#636e72"}}
                       onMouseEnter={e=>{e.target.style.borderColor="#00b894";e.target.style.color="#00b894";}}
