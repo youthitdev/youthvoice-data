@@ -14,7 +14,7 @@ const PRESET_COLORS = [
   "#f39c12","#e84393","#636e72","#00b894","#0984e3","#6c5ce7",
   "#fd79a8","#00cec9","#fdcb6e","#e17055","#2d3436","#74b9ff",
 ];
-const CAT_COLORS = [
+const DEFAULT_CATS = [
   {id:"plan",   name:"기획/준비",    color:"#27ae60"},
   {id:"recruit",name:"모집/선발",    color:"#e67e22"},
   {id:"run",    name:"진행/운영",    color:"#2980b9"},
@@ -36,8 +36,8 @@ function floatToLabel(f){
   const m=Math.floor(f);
   return `${m}/${Math.round((f-m)*DAYS[Math.min(m,12)-1])+1}`;
 }
-function catColor(id){ return CAT_COLORS.find(c=>c.id===id)?.color??"#b2bec3"; }
-function catName(id){  return CAT_COLORS.find(c=>c.id===id)?.name??id??""; }
+function catColor(cats,id){ return cats.find(c=>c.id===id)?.color??"#b2bec3"; }
+function catName(cats,id){  return cats.find(c=>c.id===id)?.name??id??""; }
 
 // Supabase
 const sbH = {"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`};
@@ -128,11 +128,14 @@ function ColorPicker({value,onChange}){
 // ── 메인 ──
 export default function App(){
   const [allData,setAllData] = useState(makeAllDefault());
+  const [cats,setCats]       = useState(DEFAULT_CATS);
   const [loading,setLoading] = useState(true);
   const [saveStatus,setSave] = useState("idle");
   const [activeYear,setActiveYear] = useState(THIS_YEAR);
   const [zoom,setZoom] = useState(1.0);
   const [tooltip,setTooltip] = useState(null);
+  const [catModal,setCatModal] = useState(false);
+  const [tempCats,setTempCats] = useState([]);
 
   // 모달
   const [projModal,setProjModal] = useState(null);
@@ -151,6 +154,7 @@ export default function App(){
       const stored=await dbGet();
       if(stored?.allData) setAllData({...makeAllDefault(),...stored.allData});
       else if(stored?.data){ const m=makeAllDefault(); m[2026]=stored.data; setAllData(m); }
+      if(stored?.cats) setCats(stored.cats);
       setLoading(false);
     })();
   },[]);
@@ -160,7 +164,7 @@ export default function App(){
     if(saveTimer.current) clearTimeout(saveTimer.current);
     setSave("saving");
     saveTimer.current=setTimeout(async()=>{
-      const ok=await dbSet({allData:ad});
+      const ok=await dbSet({allData:ad,cats});
       setSave(ok?"saved":"error");
       setTimeout(()=>setSave("idle"),2000);
     },700);
@@ -169,6 +173,17 @@ export default function App(){
   function upData(newYearData){
     const next={...allData,[activeYear]:newYearData};
     setAllData(next); save(next);
+  }
+  function saveCatsAndClose(newCats){
+    setCats(newCats);
+    setSave("saving");
+    clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(async()=>{
+      const ok=await dbSet({allData,cats:newCats});
+      setSave(ok?"saved":"error");
+      setTimeout(()=>setSave("idle"),2000);
+    },500);
+    setCatModal(false);
   }
 
   // 프로젝트
@@ -257,6 +272,7 @@ export default function App(){
           <button onClick={()=>setZoom(z=>Math.min(3.0,+(z+0.2).toFixed(1)))} style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,padding:"0 2px"}}>＋</button>
           <button onClick={()=>setZoom(1.0)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,padding:"0 2px"}}>↺</button>
         </div>
+        <Btn onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}} color="#fdcb6e" textColor="#2d3436">🎨 구분 관리</Btn>
         <Btn onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],partner:"",manager1:"",manager2:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
       </div>
     </div>
@@ -388,13 +404,13 @@ export default function App(){
                       return <div key={bi}
                         style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
                                 left:`${dl}%`,width:`${dw}%`,height:20,
-                                background:catColor(bar.cat),borderRadius:4,
+                                background:catColor(cats,bar.cat),borderRadius:4,
                                 display:"flex",alignItems:"center",justifyContent:"center",
                                 cursor:"pointer",pointerEvents:"all",
                                 boxShadow:"0 1px 3px rgba(0,0,0,0.18)",overflow:"hidden"}}
                         onClick={()=>openBarModal(pi,ri,bi)}
                         onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
-                          text:`${proj.proj.replace("\n"," ")} · ${row.prog}`+(catName(bar.cat)?` [${catName(bar.cat)}]`:"")+(bar.l?` · ${bar.l}`:"")+" ✏️"})}
+                          text:`${proj.proj.replace("\n"," ")} · ${row.prog}`+(catName(cats,bar.cat)?` [${catName(cats,bar.cat)}]`:"")+(bar.l?` · ${bar.l}`:"")+" ✏️"})}
                         onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
                         onMouseLeave={()=>setTooltip(null)}>
                         {bar.l&&<span style={{fontSize:10,color:"white",fontWeight:700,padding:"0 6px",whiteSpace:"nowrap",textShadow:"0 1px 2px rgba(0,0,0,0.25)"}}>{bar.l}</span>}
@@ -480,7 +496,7 @@ export default function App(){
         <div style={{marginBottom:10}}>
           <label style={{fontSize:11,color:"#888",display:"block",marginBottom:6}}>구분</label>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {CAT_COLORS.map(c=><div key={c.id} onClick={()=>setTempProg(p=>({...p,newBar:{...p.newBar,cat:c.id}}))}
+            {cats.map(c=><div key={c.id} onClick={()=>setTempProg(p=>({...p,newBar:{...p.newBar,cat:c.id}}))}
               style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600,
                       border:`2px solid ${tempProg.newBar.cat===c.id?"#2d3436":"#eee"}`,background:"white",
                       boxShadow:tempProg.newBar.cat===c.id?"0 2px 6px rgba(0,0,0,0.1)":"none"}}>
@@ -496,6 +512,32 @@ export default function App(){
       </div>
     </Modal>
 
+    {/* 구분 관리 모달 */}
+    <Modal open={catModal} onClose={()=>setCatModal(false)} title="🎨 구분 관리">
+      <p style={{fontSize:12,color:"#888",marginBottom:14,lineHeight:1.6}}>구분 항목을 추가·수정·삭제할 수 있어요. 저장하면 즉시 반영됩니다.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
+        {tempCats.map((cat,ci)=>(
+          <div key={cat.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#f8f9fa",borderRadius:8,border:"1px solid #eee"}}>
+            <div style={{flexShrink:0}}>
+              <ColorPicker value={cat.color} onChange={c=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,color:c}:x))}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:"#888",display:"block",marginBottom:4}}>항목명</label>
+              <Inp value={cat.name} placeholder="항목명" onChange={e=>setTempCats(l=>l.map((x,i)=>i===ci?{...x,name:e.target.value}:x))}/>
+            </div>
+            <button onClick={()=>setTempCats(l=>l.filter((_,i)=>i!==ci))}
+              style={{background:"#fab1a0",border:"none",borderRadius:5,cursor:"pointer",padding:"4px 8px",fontSize:12,flexShrink:0}}>🗑️</button>
+          </div>
+        ))}
+      </div>
+      <Btn onClick={()=>setTempCats(l=>[...l,{id:"cat_"+Date.now(),name:"새 항목",color:PRESET_COLORS[Math.floor(Math.random()*PRESET_COLORS.length)]}])}
+        color="#55efc4" textColor="#2d3436" style={{width:"100%",padding:9,marginBottom:4}}>+ 항목 추가</Btn>
+      <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:14}}>
+        <Btn onClick={()=>setCatModal(false)} color="#f5f6fa" textColor="#636e72">취소</Btn>
+        <Btn onClick={()=>saveCatsAndClose(tempCats)}>저장</Btn>
+      </div>
+    </Modal>
+
     {/* 바 수정 모달 */}
     <Modal open={!!barModal} onClose={()=>{setBarModal(null);setTempBar(null);}} title="일정 수정">
       {tempBar&&<>
@@ -506,7 +548,7 @@ export default function App(){
         <FG label="표시 텍스트"><Inp value={tempBar.l||""} placeholder="예: 모집 중" onChange={e=>setTempBar(b=>({...b,l:e.target.value}))}/></FG>
         <FG label="구분">
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:4}}>
-            {CAT_COLORS.map(c=><div key={c.id} onClick={()=>setTempBar(b=>({...b,cat:c.id}))}
+            {cats.map(c=><div key={c.id} onClick={()=>setTempBar(b=>({...b,cat:c.id}))}
               style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600,
                       border:`2px solid ${tempBar.cat===c.id?"#2d3436":"#eee"}`,background:"white",
                       boxShadow:tempBar.cat===c.id?"0 2px 6px rgba(0,0,0,0.1)":"none"}}>
