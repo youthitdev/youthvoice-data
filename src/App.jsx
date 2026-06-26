@@ -720,14 +720,20 @@ export default function App() {
                           const xEnd=(bar.e-1)/12*100;
                           const w=xEnd-xStart;
                           if(w<=0) return null;
+                          // 최소 너비: 셀 1개(1/12) 또는 실제 너비 중 큰 값
+                          const minW=1/12*100;
+                          const displayW=Math.max(w, minW);
+                          // 최소 너비 적용 시 오른쪽으로 넘치지 않도록 left 조정
+                          const displayLeft=Math.min(xStart, 100-displayW);
                           return (
                             <div key={bi}
                               style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
-                                      left:`${xStart}%`,width:`${w}%`,height:20,
+                                      left:`${displayLeft}%`,width:`${displayW}%`,height:20,
                                       background:catColor(legend,bar.cat),borderRadius:4,
                                       display:"flex",alignItems:"center",justifyContent:"center",
                                       cursor:"pointer",pointerEvents:"all",
-                                      boxShadow:"0 1px 3px rgba(0,0,0,0.2)",overflow:"hidden"}}
+                                      boxShadow:"0 1px 3px rgba(0,0,0,0.2)",overflow:"hidden",
+                                      outline: displayW>w?"2px dashed rgba(255,255,255,0.5)":"none"}}
                               onClick={()=>openBarEdit(pi,ri,bi,activeYear)}
                               onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
                                 text:`${proj.proj.replace("\n"," ")} · ${row.prog}`+
