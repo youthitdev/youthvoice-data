@@ -225,8 +225,10 @@ export default function App() {
   const [tempLeg,setTempLeg]     = useState([]);
   const saveTimer = useRef(null);
   const swipeRef = useRef({active:false, startX:0, startYear:null});
-  const chartRef = useRef(null);      // 차트 스크롤 컨테이너
-  const firstYearColRef = useRef(null); // 2026년 1월 헤더 셀 ref (실제 위치 측정용)
+  const chartRef = useRef(null);
+  const firstYearColRef = useRef(null);
+  const activeYearRef = useRef(activeYear);  // onScroll에서 안전하게 읽기용
+  const rafRef = useRef(null);               // requestAnimationFrame id
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -273,18 +275,14 @@ export default function App() {
 
   // 연도 변경시 필터 초기화
   function changeYear(y) {
+    activeYearRef.current = y;
     setActiveYear(y);
     setFilter("all");
-    // 클릭한 연도의 첫 번째 월 위치로 스크롤
     if(chartRef.current && firstYearColRef.current) {
-      const container = chartRef.current;
-      const firstCell = firstYearColRef.current;
-      // firstYearColRef = 2026년 1월 셀의 실제 left 위치
-      const firstCellLeft = firstCell.offsetLeft;
-      const cellWidth = firstCell.offsetWidth;
+      const firstCellLeft = firstYearColRef.current.offsetLeft;
+      const cellWidth = firstYearColRef.current.offsetWidth || 64;
       const idx = YEARS.indexOf(y);
-      const scrollLeft = firstCellLeft + idx * 12 * cellWidth;
-      container.scrollTo({left: scrollLeft, behavior:"smooth"});
+      chartRef.current.scrollTo({left: firstCellLeft + idx * 12 * cellWidth, behavior:"smooth"});
     }
   }
 
@@ -502,22 +500,23 @@ export default function App() {
         ref={chartRef}
         style={{overflowX:"auto",padding:"20px 0 40px"}}
         onScroll={e=>{
-          try {
-            if(!firstYearColRef.current) return;
-            const scrollLeft = e.currentTarget.scrollLeft;
-            const firstCellLeft = firstYearColRef.current.offsetLeft;
-            const cellWidth = firstYearColRef.current.offsetWidth;
-            if(!cellWidth) return;
-            // 뷰포트 왼쪽 기준으로 현재 보이는 연도 계산
-            const visibleLeft = scrollLeft;
-            const yearStartLeft = firstCellLeft;
-            const monthsScrolled = (visibleLeft - yearStartLeft) / cellWidth;
-            const yearIdx = Math.max(0, Math.min(YEARS.length-1,
-              Math.floor(monthsScrolled / 12)
-            ));
-            const visibleYear = YEARS[yearIdx];
-            setActiveYear(prev => prev === visibleYear ? prev : visibleYear);
-          } catch(err) { /* 스크롤 중 안전하게 무시 */ }
+          const scrollLeft = e.currentTarget.scrollLeft;
+          if(rafRef.current) cancelAnimationFrame(rafRef.current);
+          rafRef.current = requestAnimationFrame(()=>{
+            try {
+              if(!firstYearColRef.current) return;
+              const firstCellLeft = firstYearColRef.current.offsetLeft;
+              const cellWidth = firstYearColRef.current.offsetWidth;
+              if(!cellWidth) return;
+              const monthsScrolled = (scrollLeft - firstCellLeft) / cellWidth;
+              const yearIdx = Math.max(0, Math.min(YEARS.length-1, Math.floor(monthsScrolled/12)));
+              const visibleYear = YEARS[yearIdx];
+              if(activeYearRef.current !== visibleYear) {
+                activeYearRef.current = visibleYear;
+                setActiveYear(visibleYear);
+              }
+            } catch(e){}
+          });
         }}>
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead>
@@ -608,7 +607,7 @@ export default function App() {
                               <div style={{position:"absolute",top:0,bottom:0,left:`${((TODAY_MONTH-1)/1)*0+50}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
                             </>}
                             {/* 해당 연도·월에 걸치는 바 렌더 */}
-                            {((allData[y]||[])[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
+                            {((allData[y]||[])?.[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
                               const overlapS=Math.max(bar.s,cellS);
                               const overlapE=Math.min(bar.e,cellE);
                               if(overlapS>=overlapE) return null;
@@ -643,8 +642,8 @@ export default function App() {
                       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}>
                         <button title="위로" onClick={()=>moveProgram(pi,ri,-1)} disabled={ri===0}
                           style={{background:ri===0?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===0?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===0?"#b2bec3":"#636e72"}}>▲</button>
-                        <button title="아래로" onClick={()=>moveProgram(pi,ri,1)} disabled={ri===data[pi].rows.length-1}
-                          style={{background:ri===data[pi].rows.length-1?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===data[pi].rows.length-1?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===data[pi].rows.length-1?"#b2bec3":"#636e72"}}>▼</button>
+                        <button title="아래로" onClick={()=>moveProgram(pi,ri,1)} disabled={ri===(baseData[pi]?.rows?.length??1)-1}
+                          style={{background:ri===(baseData[pi]?.rows?.length??1)-1?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===(baseData[pi]?.rows?.length??1)-1?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===(baseData[pi]?.rows?.length??1)-1?"#b2bec3":"#636e72"}}>▼</button>
                         <button title="아래에 사업 추가" onClick={()=>openAddProgramAt(pi,ri)}
                           style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>＋</button>
                         <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars)),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
