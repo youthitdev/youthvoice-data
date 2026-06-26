@@ -419,11 +419,9 @@ export default function App() {
   const isCurrentYear=activeYear===THIS_YEAR;
   const activeCount=isCurrentYear?data.reduce((s,p)=>s+p.rows.filter(r=>r.bars.some(b=>b.s<=TODAY_MONTH&&b.e>=TODAY_MONTH)).length,0):0;
   const todayPct=((TODAY_MONTH-1)/NCOLS*100).toFixed(2);
-  // 행 기준: 현재 선택된 연도 데이터
-  const baseData = allData[activeYear] || [];
   const visData = activeFilter==="all"
-    ? baseData.map((p,i)=>({...p,_i:i}))
-    : baseData.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(activeFilter));
+    ? data.map((p,i)=>({...p,_i:i}))
+    : data.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(activeFilter));
 
   if(loading) return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16}}>
@@ -542,7 +540,7 @@ export default function App() {
       {/* 필터 */}
       <div style={{display:"flex",gap:8,padding:"10px 24px",background:"white",borderBottom:"1px solid #eee",flexWrap:"wrap",alignItems:"center"}}>
         <span style={{fontSize:12,color:"#636e72",fontWeight:600,marginRight:4}}>필터:</span>
-        {[{key:"all",label:"전체",color:null},...baseData.map((p,i)=>({key:String(i),label:p.proj.replace("\n"," "),color:p.color}))].map(f=>(
+        {[{key:"all",label:"전체",color:null},...data.map((p,i)=>({key:String(i),label:p.proj.replace("\n"," "),color:p.color}))].map(f=>(
           <button key={f.key} onClick={()=>setFilter(f.key)}
             style={{padding:"5px 13px",borderRadius:20,border:`1.5px solid ${activeFilter===f.key?"#2d3436":"#dfe6e9"}`,
                     background:activeFilter===f.key?"#2d3436":"white",color:activeFilter===f.key?"white":"#636e72",
@@ -614,7 +612,7 @@ export default function App() {
             </tr>
           </thead>
           <tbody>
-            {baseData.length===0&&(
+            {data.length===0&&(
               <tr><td colSpan={14}>
                 <div style={{textAlign:"center",padding:60,color:"#b2bec3"}}>
                   <div style={{fontSize:40}}>📭</div>
@@ -625,7 +623,7 @@ export default function App() {
             )}
             {visData.map(proj=>{
               const pi=proj._i;
-              const bars_for_year = (allData[activeYear]||[])?.[pi]?.rows;
+
               return [
                 ...proj.rows.map((row,ri)=>(
                   <tr key={`${pi}-${ri}`}
@@ -684,7 +682,7 @@ export default function App() {
                       )}
                       {/* 바 오버레이 */}
                       <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:2}}>
-                        {(bars_for_year?.[ri]?.bars||[]).map((bar,bi)=>{
+                        {(data?.[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
                           const xStart=(bar.s-1)/12*100;
                           const xEnd=(bar.e-1)/12*100;
                           const w=xEnd-xStart;
@@ -719,7 +717,7 @@ export default function App() {
                         <span title="드래그하여 순서 변경" style={{cursor:"grab",fontSize:13,color:"#b2bec3",padding:"0 2px",userSelect:"none"}}>⠿</span>
                         <button title="아래에 사업 추가" onClick={()=>openAddProgramAt(pi,ri)}
                           style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>＋</button>
-                        <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(bars_for_year?.[ri]?.bars||[])),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
+                        <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(data?.[pi]?.rows?.[ri]?.bars||[])),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
                           style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>✏️</button>
                         <button title="삭제" onClick={()=>delProgram(pi,ri)}
                           style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>🗑️</button>
