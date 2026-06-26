@@ -229,7 +229,10 @@ export default function App() {
   const firstYearColRef = useRef(null);
   const activeYearRef = useRef(activeYear);
   const rafRef = useRef(null);
-  const [cellWidth, setCellWidth] = useState(64); // 월 셀 너비 (확대/축소)
+  const [zoom, setZoom] = useState(1.0);  // 차트 확대/축소 배율
+  const MIN_ZOOM = 0.4;
+  const MAX_ZOOM = 3.0;
+  const cellWidth = Math.round(64 * zoom);  // 기본 64px × zoom
   const MIN_CELL = 36;
   const MAX_CELL = 120;
 
@@ -386,11 +389,13 @@ export default function App() {
           <SaveBadge s={saveStatus}/>
           {/* 확대/축소 */}
           <div style={{display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"4px 8px"}}>
-            <button onClick={()=>setCellWidth(w=>Math.max(MIN_CELL,w-12))} title="축소"
+            <button onClick={()=>setZoom(z=>Math.max(MIN_ZOOM,+(z-0.2).toFixed(1)))} title="축소 (Ctrl+스크롤)"
               style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>−</button>
-            <span style={{fontSize:11,color:"rgba(255,255,255,0.7)",minWidth:32,textAlign:"center"}}>{cellWidth}px</span>
-            <button onClick={()=>setCellWidth(w=>Math.min(MAX_CELL,w+12))} title="확대"
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.7)",minWidth:36,textAlign:"center"}}>{Math.round(zoom*100)}%</span>
+            <button onClick={()=>setZoom(z=>Math.min(MAX_ZOOM,+(z+0.2).toFixed(1)))} title="확대 (Ctrl+스크롤)"
               style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>＋</button>
+            <button onClick={()=>setZoom(1.0)} title="100% 초기화"
+              style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,lineHeight:1,padding:"0 2px"}}>↺</button>
           </div>
           <Btn v="legend" onClick={()=>{setTempLeg(JSON.parse(JSON.stringify(legend)));setLegModal(true);}}>🎨 범례 관리</Btn>
           <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0]});setProjModal({});}}>+ 프로젝트 추가</Btn>
@@ -510,6 +515,14 @@ export default function App() {
       <div
         ref={chartRef}
         style={{overflowX:"auto",padding:"20px 0 40px"}}
+        onWheel={e=>{
+          // Ctrl+스크롤 or 트랙패드 핀치줌
+          if(e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            setZoom(z=>+(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z+delta))).toFixed(2));
+          }
+        }}
         onScroll={e=>{
           const scrollLeft = e.currentTarget.scrollLeft;
           if(rafRef.current) cancelAnimationFrame(rafRef.current);
