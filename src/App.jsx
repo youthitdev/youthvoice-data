@@ -696,33 +696,51 @@ export default function App() {
                             {isToday&&ri===0&&<>
                               <div style={{position:"absolute",top:0,bottom:0,left:`${((TODAY_MONTH-1)/1)*0+50}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
                             </>}
-                            {/* 해당 연도·월에 걸치는 바 렌더 */}
-                            {((allData[y]||[])?.[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
-                              const overlapS=Math.max(bar.s,cellS);
-                              const overlapE=Math.min(bar.e,cellE);
-                              if(overlapS>=overlapE) return null;
-                              const leftPct=((overlapS-cellS)/(cellE-cellS)*100).toFixed(2);
-                              const widthPct=((overlapE-overlapS)/(cellE-cellS)*100).toFixed(2);
-                              return (
-                                <div key={bi} style={{
-                                  position:"absolute",top:"50%",transform:"translateY(-50%)",
-                                  height:20,borderRadius:4,
-                                  left:`${leftPct}%`,width:`${widthPct}%`,
-                                  background:catColor(legend,bar.cat),
-                                  display:"flex",alignItems:"center",justifyContent:"center",
-                                  cursor:"pointer",zIndex:2,overflow:"visible",
-                                  boxShadow:"0 1px 3px rgba(0,0,0,0.15)"}}
-                                  onClick={()=>openBarEdit(pi,ri,bi,y)}
-                                  onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
-                                    text:`[${y}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
-                                         (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
-                                         (bar.l?` · ${bar.l}`:"")+" (클릭하여 수정)"})}
-                                  onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
-                                  onMouseLeave={()=>setTooltip(null)}>
-                                  {overlapS===bar.s&&bar.l&&<span style={{fontSize:10,color:"white",fontWeight:600,padding:"0 6px",whiteSpace:"nowrap",letterSpacing:"-0.2px"}}>{bar.l}</span>}
-                                </div>
-                              );
-                            })}
+                            {/* 첫 번째 셀에만 바 오버레이 컨테이너 렌더 */}
+                            {yi===0&&mi===0&&(
+                              <div style={{position:"absolute",top:0,left:0,height:"100%",
+                                           width:`${YEARS.length*12*cellWidth}px`,
+                                           pointerEvents:"none",zIndex:2}}>
+                                {(()=>{
+                                  // 이 프로젝트-행의 모든 연도 바를 하나로 그림
+                                  const allBars=[];
+                                  YEARS.forEach((yr,yi2)=>{
+                                    ((allData[yr]||[])?.[pi]?.rows?.[ri]?.bars||[]).forEach((bar,bi)=>{
+                                      // bar.s, bar.e: 월.소수 (1~13)
+                                      // x 위치: (연도오프셋 + (bar.s-1)) * cellWidth
+                                      const yOffset=yi2*12*cellWidth;
+                                      const xStart=yOffset+(bar.s-1)*cellWidth;
+                                      const xEnd=yOffset+(bar.e-1)*cellWidth;
+                                      const w=xEnd-xStart;
+                                      if(w<=0) return;
+                                      allBars.push(
+                                        <div key={`${yr}-${bi}`}
+                                          style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
+                                                  left:xStart,width:w,height:20,
+                                                  background:catColor(legend,bar.cat),
+                                                  borderRadius:4,
+                                                  display:"flex",alignItems:"center",justifyContent:"center",
+                                                  cursor:"pointer",pointerEvents:"all",
+                                                  boxShadow:"0 1px 3px rgba(0,0,0,0.2)",
+                                                  overflow:"hidden"}}
+                                          onClick={()=>openBarEdit(pi,ri,bi,yr)}
+                                          onMouseEnter={e=>{setTooltip({x:e.clientX,y:e.clientY,
+                                            text:`[${yr}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
+                                                 (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
+                                                 (bar.l?` · ${bar.l}`:"")+" ✏️"});}}
+                                          onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
+                                          onMouseLeave={()=>setTooltip(null)}>
+                                          {bar.l&&<span style={{fontSize:10,color:"white",fontWeight:700,
+                                                                 padding:"0 8px",whiteSpace:"nowrap",
+                                                                 textShadow:"0 1px 2px rgba(0,0,0,0.3)"}}>{bar.l}</span>}
+                                        </div>
+                                      );
+                                    });
+                                  });
+                                  return allBars;
+                                })()}
+                              </div>
+                            )}
                           </td>
                         );
                       })
