@@ -627,13 +627,36 @@ export default function App() {
               return [
                 ...(proj.rows.length===0?[
                   <tr key={`${pi}-empty`}>
-                    <td style={{height:48,border:"none",background:"transparent"}}/>
-                    <td colSpan={13} style={{height:48,border:"none",background:"transparent",
-                        verticalAlign:"middle",paddingLeft:16,color:"#b2bec3",fontSize:12}}>
-                      사업이 없습니다. 관리 버튼 ＋ 으로 추가하세요.
-                      <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
-                        style={{marginLeft:12,background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 8px",fontSize:11}}>＋ 사업 추가</button>
+                    {/* 빈 프로젝트: 프로젝트 셀 + 빈 메시지 */}
+                    <td data-sticky="1" rowSpan={2} style={{
+                      width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",
+                      background:`${proj.color}18`,border:"none",borderLeft:`4px solid ${proj.color}`,
+                      padding:"6px",lineHeight:1.5,verticalAlign:"middle",color:proj.color,
+                      position:"sticky",left:0,zIndex:3}}>
+                      {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
+                      {(proj.partner||proj.manager1||proj.manager2)&&(
+                        <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.8,color:"#666",fontWeight:400}}>
+                          {proj.partner&&<div>🤝 {proj.partner}</div>}
+                          {proj.manager1&&<div>정 {proj.manager1}</div>}
+                          {proj.manager2&&<div style={{opacity:0.7}}>부 {proj.manager2}</div>}
+                        </div>
+                      )}
+                      <div style={{marginTop:8,display:"flex",justifyContent:"center",gap:4}}>
+                        <button title="프로젝트 수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,partner:proj.partner||"",manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
+                          style={{background:"#74b9ff",border:"none",borderRadius:6,cursor:"pointer",padding:"4px 8px",fontSize:12}}>✏️</button>
+                        <button title="프로젝트 삭제" onClick={()=>delProject(pi)}
+                          style={{background:"#e17055",border:"none",borderRadius:6,cursor:"pointer",padding:"4px 8px",fontSize:12,color:"white",fontWeight:700}}>🗑️</button>
+                      </div>
                     </td>
+                    <td data-sticky="1" style={{width:180,minWidth:180,background:"white",border:"none",
+                        position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}/>
+                    <td colSpan={12} style={{height:48,border:"none",background:"transparent",
+                        verticalAlign:"middle",paddingLeft:16,color:"#b2bec3",fontSize:12}}>
+                      사업이 없습니다.
+                      <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
+                        style={{marginLeft:10,background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 8px",fontSize:11}}>＋ 사업 추가</button>
+                    </td>
+                    <td data-sticky="1" style={{background:"white",border:"none",position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}/>
                   </tr>
                 ]:proj.rows.map((row,ri)=>(
                   <tr key={`${pi}-${ri}`}
