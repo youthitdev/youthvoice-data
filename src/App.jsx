@@ -227,8 +227,11 @@ export default function App() {
   const swipeRef = useRef({active:false, startX:0, startYear:null});
   const chartRef = useRef(null);
   const firstYearColRef = useRef(null);
-  const activeYearRef = useRef(activeYear);  // onScroll에서 안전하게 읽기용
-  const rafRef = useRef(null);               // requestAnimationFrame id
+  const activeYearRef = useRef(activeYear);
+  const rafRef = useRef(null);
+  const [cellWidth, setCellWidth] = useState(64); // 월 셀 너비 (확대/축소)
+  const MIN_CELL = 36;
+  const MAX_CELL = 120;
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -280,9 +283,9 @@ export default function App() {
     setFilter("all");
     if(chartRef.current && firstYearColRef.current) {
       const firstCellLeft = firstYearColRef.current.offsetLeft;
-      const cellWidth = firstYearColRef.current.offsetWidth || 64;
+      const cw = firstYearColRef.current.offsetWidth || cellWidth;
       const idx = YEARS.indexOf(y);
-      chartRef.current.scrollTo({left: firstCellLeft + idx * 12 * cellWidth, behavior:"smooth"});
+      chartRef.current.scrollTo({left: firstCellLeft + idx * 12 * cw, behavior:"smooth"});
     }
   }
 
@@ -381,6 +384,14 @@ export default function App() {
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
           <SaveBadge s={saveStatus}/>
+          {/* 확대/축소 */}
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"4px 8px"}}>
+            <button onClick={()=>setCellWidth(w=>Math.max(MIN_CELL,w-12))} title="축소"
+              style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>−</button>
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.7)",minWidth:32,textAlign:"center"}}>{cellWidth}px</span>
+            <button onClick={()=>setCellWidth(w=>Math.min(MAX_CELL,w+12))} title="확대"
+              style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,lineHeight:1,padding:"0 2px"}}>＋</button>
+          </div>
           <Btn v="legend" onClick={()=>{setTempLeg(JSON.parse(JSON.stringify(legend)));setLegModal(true);}}>🎨 범례 관리</Btn>
           <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0]});setProjModal({});}}>+ 프로젝트 추가</Btn>
         </div>
@@ -534,7 +545,7 @@ export default function App() {
                   <th key={`${y}-${mi}`}
                     ref={yi===0&&mi===0?firstYearColRef:null}
                     style={{
-                      ...th("64px","center"),
+                      ...th(`${cellWidth}px`,"center"),
                       background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
                                   mi===0?"#f0f7ff":"white",
                       borderLeft: mi===0?"3px solid #2d3436":"1px solid #f0f0f0",
@@ -542,8 +553,9 @@ export default function App() {
                       fontSize:10, whiteSpace:"nowrap",
                     }}>
                     {mi===0
-                      ? <><span style={{display:"block",fontSize:11,fontWeight:800,color:"#2d3436"}}>{y}</span>{m}</>
-                      : m}
+                      ? <><span style={{display:"block",fontSize:Math.max(9,Math.min(11,cellWidth/6)),fontWeight:800,color:"#2d3436"}}>{y}</span>
+                         <span style={{fontSize:Math.max(8,Math.min(10,cellWidth/7))}}>{cellWidth>=50?m:`${mi+1}`}</span></>
+                      : <span style={{fontSize:Math.max(8,Math.min(10,cellWidth/7))}}>{cellWidth>=50?m:`${mi+1}`}</span>}
                   </th>
                 ))
               )}
@@ -604,7 +616,7 @@ export default function App() {
                             borderBottom:"1px solid #f0f0f0",
                             borderLeft:isYearStart?"3px solid #dde":"1px solid #f5f5f5",
                             background:isToday?"#fff5f5":"white",
-                            minWidth:64,width:64,
+                            minWidth:cellWidth,width:cellWidth,
                           }}>
                             {/* 오늘 세로선 */}
                             {isToday&&ri===0&&<>
