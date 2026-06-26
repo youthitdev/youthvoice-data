@@ -6,8 +6,11 @@ const TABLE = "yv_data";
 const STORAGE_KEY = "gantt_v3";
 
 const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
-const THIS_YEAR = new Date().getFullYear();
-const TODAY_MONTH = new Date().getMonth() + 1;
+// 한국 시간(KST = UTC+9) 기준
+const KST = new Date(new Date().toLocaleString("en-US", {timeZone:"Asia/Seoul"}));
+const THIS_YEAR = KST.getFullYear();
+const TODAY_MONTH = KST.getMonth() + 1;
+const TODAY_DAY = KST.getDate();
 const YEARS = Array.from({length:10},(_,i)=>THIS_YEAR+i);
 const PRESET_COLORS = [
   "#27ae60","#e67e22","#2980b9","#16a085","#8e44ad","#c0392b",
@@ -273,7 +276,8 @@ export default function App(){
   }
 
   const cellW = Math.round(64*zoom);
-  const todayPct = (TODAY_MONTH-1)/12*100 + 1/24*100;
+  // 오늘 선: 월 + 일 기준으로 정확한 위치
+  const todayPct = (TODAY_MONTH-1)/12*100 + (TODAY_DAY-1)/(DAYS[TODAY_MONTH-1]*12)*100;
 
   if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16,fontFamily:"'Apple SD Gothic Neo','Noto Sans KR',sans-serif"}}>
     <div style={{fontSize:40}}>📋</div><div style={{fontSize:14,color:"#636e72"}}>데이터를 불러오는 중...</div>
