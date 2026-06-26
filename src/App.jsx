@@ -575,36 +575,15 @@ export default function App() {
         ref={chartRef}
         style={{overflowX:"auto",overflowY:"auto",padding:"0 0 40px",maxHeight:"calc(100vh - 280px)"}}
         onWheel={e=>{
-          // Ctrl+스크롤 or 트랙패드 핀치줌
-          if(e.ctrlKey || e.metaKey) {
+          if(e.ctrlKey||e.metaKey){
             e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            setZoom(z=>+(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z+delta))).toFixed(2));
+            const delta=e.deltaY>0?-0.1:0.1;
+            setZoom(z=>+(Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,z+delta))).toFixed(2));
           }
-        }}
-        onScroll={e=>{
-          const scrollLeft = e.currentTarget.scrollLeft;
-          if(rafRef.current) cancelAnimationFrame(rafRef.current);
-          rafRef.current = requestAnimationFrame(()=>{
-            try {
-              if(!firstYearColRef.current) return;
-              const firstCellLeft = firstYearColRef.current.offsetLeft;
-              const cellWidth = firstYearColRef.current.offsetWidth;
-              if(!cellWidth) return;
-              const monthsScrolled = (scrollLeft - firstCellLeft) / cellWidth;
-              const yearIdx = Math.max(0, Math.min(YEARS.length-1, Math.floor(monthsScrolled/12)));
-              const visibleYear = YEARS[yearIdx];
-              if(activeYearRef.current !== visibleYear) {
-                activeYearRef.current = visibleYear;
-                setActiveYear(visibleYear);
-              }
-            } catch(e){}
-          });
         }}>
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead style={{position:"sticky",top:0,zIndex:20}}>
             <tr>
-              {/* 고정 컬럼 — Project+Program 합쳐서 sticky */}
               <th style={{width:100,minWidth:100,fontSize:11,fontWeight:600,color:"#636e72",padding:"6px 8px",
                           borderBottom:"2px solid #dfe6e9",textAlign:"center",whiteSpace:"nowrap",
                           background:"white",position:"sticky",left:0,top:0,zIndex:30,
@@ -613,47 +592,40 @@ export default function App() {
                           borderBottom:"2px solid #dfe6e9",textAlign:"left",whiteSpace:"nowrap",
                           background:"white",position:"sticky",left:100,top:0,zIndex:30,
                           boxShadow:"4px 2px 8px rgba(0,0,0,0.08)"}}>Program</th>
-              {/* 연도×월 헤더 */}
-              {YEARS.map((y,yi)=>
-                MONTHS.map((m,mi)=>(
-                  <th key={`${y}-${mi}`}
-                    ref={yi===0&&mi===0?firstYearColRef:null}
-                    style={{
-                      ...th(`${cellWidth}px`,"center"),
-                      position:"sticky",top:0,zIndex:20,
-                      background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"rgba(225,112,85,0.07)":
-                                  mi===0?"#f8f9fa":"white",
-                      borderLeft: mi===0?"3px solid #b2bec3":"none",
-                      borderBottom:"2px solid #dfe6e9",
-                      color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
-                      fontSize:10, whiteSpace:"nowrap",
-                      boxShadow:"0 2px 4px rgba(0,0,0,0.04)",
-                    }}>
-                    {mi===0
-                      ? <><span style={{display:"block",fontSize:Math.max(9,Math.min(11,cellWidth/6)),fontWeight:800,color:"#2d3436"}}>{y}</span>
-                         <span style={{fontSize:Math.max(8,Math.min(10,cellWidth/7))}}>{cellWidth>=50?m:`${mi+1}`}</span></>
-                      : <span style={{fontSize:Math.max(8,Math.min(10,cellWidth/7))}}>{cellWidth>=50?m:`${mi+1}`}</span>}
-                  </th>
-                ))
-              )}
-              <th style={{...th("90px","center"),position:"sticky",right:0,top:0,zIndex:30,
+              {MONTHS.map((m,mi)=>(
+                <th key={mi}
+                  ref={mi===0?firstYearColRef:null}
+                  style={{
+                    ...th(`${cellWidth}px`,"center"),
+                    position:"sticky",top:0,zIndex:20,
+                    background: activeYear===THIS_YEAR&&mi+1===TODAY_MONTH?"rgba(225,112,85,0.07)":"white",
+                    borderLeft:"none",
+                    borderBottom:"2px solid #dfe6e9",
+                    color: activeYear===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
+                    fontSize:10,whiteSpace:"nowrap",
+                    boxShadow:"0 2px 4px rgba(0,0,0,0.04)",
+                  }}>
+                  <span style={{fontSize:Math.max(8,Math.min(11,cellWidth/7))}}>{cellWidth>=50?m:`${mi+1}`}</span>
+                </th>
+              ))}
+              <th style={{...th("80px","center"),position:"sticky",right:0,top:0,zIndex:30,
                           background:"white",boxShadow:"-2px 2px 6px rgba(0,0,0,0.06)",
                           borderBottom:"2px solid #dfe6e9"}}>관리</th>
             </tr>
           </thead>
           <tbody>
-            {/* 프로젝트별 행 — 현재 연도 기준으로 렌더, 관리는 activeYear 데이터 */}
             {baseData.length===0&&(
-              <tr><td colSpan={YEARS.length*12+3}>
+              <tr><td colSpan={14}>
                 <div style={{textAlign:"center",padding:60,color:"#b2bec3"}}>
                   <div style={{fontSize:40}}>📭</div>
-                  <div style={{marginTop:12,fontSize:14}}>프로젝트가 없습니다.</div>
-                  <div style={{marginTop:6,fontSize:12}}>위의 "+ 프로젝트 추가" 버튼으로 시작하세요!</div>
+                  <div style={{marginTop:12,fontSize:14}}>{activeYear}년 프로젝트가 없습니다.</div>
+                  <div style={{marginTop:6,fontSize:12}}>"+ 프로젝트 추가" 버튼으로 시작하세요!</div>
                 </div>
               </td></tr>
             )}
             {visData.map(proj=>{
               const pi=proj._i;
+              const bars_for_year = (allData[activeYear]||[])?.[pi]?.rows;
               return [
                 ...proj.rows.map((row,ri)=>(
                   <tr key={`${pi}-${ri}`}
@@ -667,106 +639,79 @@ export default function App() {
                             transition:"background 0.1s"}}
                     onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#f0f8ff";})}
                     onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="transparent";})}>
-                    {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
                         width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",
-                        background:`${proj.color}18`,
-                        border:"none",borderLeft:`4px solid ${proj.color}`,
-                        padding:"6px",lineHeight:1.5,verticalAlign:"middle",
-                        color:proj.color,
+                        background:`${proj.color}18`,border:"none",borderLeft:`4px solid ${proj.color}`,
+                        padding:"6px",lineHeight:1.5,verticalAlign:"top",color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         {(proj.partner||proj.manager1||proj.manager2)&&(
-                          <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.8,textAlign:"center",color:"#666",fontWeight:400}}>
-                            {proj.partner&&<div style={{fontWeight:400}}>🤝 {proj.partner}</div>}
-                            {proj.manager1&&<div style={{fontWeight:400}}>정 {proj.manager1}</div>}
-                            {proj.manager2&&<div style={{fontWeight:400,opacity:0.7}}>부 {proj.manager2}</div>}
+                          <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.8,color:"#666",fontWeight:400}}>
+                            {proj.partner&&<div>🤝 {proj.partner}</div>}
+                            {proj.manager1&&<div>정 {proj.manager1}</div>}
+                            {proj.manager2&&<div style={{opacity:0.7}}>부 {proj.manager2}</div>}
                           </div>
                         )}
-                        <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
-                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,partner:proj.partner||"",manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
-                            style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>✏️</button>
-                          <button title="삭제" onClick={()=>delProject(pi)}
-                            style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>🗑️</button>
+                        <div style={{marginTop:8,display:"flex",justifyContent:"center",gap:4}}>
+                          <button title="프로젝트 수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,partner:proj.partner||"",manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
+                            style={{background:"#74b9ff",border:"none",borderRadius:6,cursor:"pointer",padding:"4px 8px",fontSize:12}}>✏️</button>
+                          <button title="프로젝트 삭제" onClick={()=>delProject(pi)}
+                            style={{background:"#e17055",border:"none",borderRadius:6,cursor:"pointer",padding:"4px 8px",fontSize:12,color:"white",fontWeight:700}}>🗑️</button>
                         </div>
                       </td>
                     )}
-                    {/* 사업명 셀 (고정) */}
                     <td data-sticky="1" style={{width:180,minWidth:180,fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
-                        border:"none",verticalAlign:"middle",
-                        position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>
+                        border:"none",verticalAlign:"middle",position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>
                       {row.prog}
                     </td>
-                    {/* 연도×월 바 셀 */}
-                    {YEARS.map((y,yi)=>
-                      MONTHS.map((m,mi)=>{
-                        const isToday=y===THIS_YEAR&&mi+1===TODAY_MONTH;
-                        const isYearStart=mi===0;
-                        // 이 셀의 월 범위: [mi+1, mi+2) in float
-                        const cellS=mi+1, cellE=mi+2;
-                        return (
-                          <td key={`${y}-${mi}`} style={{
-                            position:"relative",height:36,padding:0,
-                            borderBottom:"none",
-                            borderLeft:isYearStart?"2px solid #dfe6e9":"none",
-                            background:isToday?"rgba(225,112,85,0.07)":"transparent",
-                            minWidth:cellWidth,width:cellWidth,
-                          }}>
-                            {/* 오늘 세로선 */}
-                            {isToday&&ri===0&&<>
-                              <div style={{position:"absolute",top:0,bottom:0,left:`${((TODAY_MONTH-1)/1)*0+50}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
-                            </>}
-                            {/* 첫 번째 셀에만 바 오버레이 컨테이너 렌더 */}
-                            {yi===0&&mi===0&&(
-                              <div style={{position:"absolute",top:0,left:0,height:"100%",
-                                           width:`${YEARS.length*12*cellWidth}px`,
-                                           pointerEvents:"none",zIndex:2}}>
-                                {(()=>{
-                                  // 이 프로젝트-행의 모든 연도 바를 하나로 그림
-                                  const allBars=[];
-                                  YEARS.forEach((yr,yi2)=>{
-                                    ((allData[yr]||[])?.[pi]?.rows?.[ri]?.bars||[]).forEach((bar,bi)=>{
-                                      // bar.s, bar.e: 월.소수 (1~13)
-                                      // x 위치: (연도오프셋 + (bar.s-1)) * cellWidth
-                                      const yOffset=yi2*12*cellWidth;
-                                      const xStart=yOffset+(bar.s-1)*cellWidth;
-                                      const xEnd=yOffset+(bar.e-1)*cellWidth;
-                                      const w=xEnd-xStart;
-                                      if(w<=0) return;
-                                      allBars.push(
-                                        <div key={`${yr}-${bi}`}
-                                          style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
-                                                  left:xStart,width:w,height:20,
-                                                  background:catColor(legend,bar.cat),
-                                                  borderRadius:4,
-                                                  display:"flex",alignItems:"center",justifyContent:"center",
-                                                  cursor:"pointer",pointerEvents:"all",
-                                                  boxShadow:"0 1px 3px rgba(0,0,0,0.2)",
-                                                  overflow:"hidden"}}
-                                          onClick={()=>openBarEdit(pi,ri,bi,yr)}
-                                          onMouseEnter={e=>{setTooltip({x:e.clientX,y:e.clientY,
-                                            text:`[${yr}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
-                                                 (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
-                                                 (bar.l?` · ${bar.l}`:"")+" ✏️"});}}
-                                          onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
-                                          onMouseLeave={()=>setTooltip(null)}>
-                                          {bar.l&&<span style={{fontSize:10,color:"white",fontWeight:700,
-                                                                 padding:"0 8px",whiteSpace:"nowrap",
-                                                                 textShadow:"0 1px 2px rgba(0,0,0,0.3)"}}>{bar.l}</span>}
-                                        </div>
-                                      );
-                                    });
-                                  });
-                                  return allBars;
-                                })()}
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })
-                    )}
-                    {/* 관리 셀 (고정) */}
+                    {/* 해당 연도 12개월 셀 */}
+                    <td style={{position:"relative",height:36,padding:0,border:"none",
+                                background:"transparent",minWidth:cellWidth*12,width:cellWidth*12}}
+                        colSpan={12}>
+                      {/* 오늘 세로선 */}
+                      {activeYear===THIS_YEAR&&ri===0&&(
+                        <div style={{position:"absolute",top:0,bottom:0,
+                                     left:`${(TODAY_MONTH-1)/12*100+1/24*100}%`,
+                                     width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
+                      )}
+                      {/* 월 구분 배경 (오늘 달 강조) */}
+                      {activeYear===THIS_YEAR&&(
+                        <div style={{position:"absolute",top:0,bottom:0,
+                                     left:`${(TODAY_MONTH-1)/12*100}%`,
+                                     width:`${1/12*100}%`,
+                                     background:"rgba(225,112,85,0.05)",pointerEvents:"none"}}/>
+                      )}
+                      {/* 바 오버레이 */}
+                      <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:2}}>
+                        {(bars_for_year?.[ri]?.bars||[]).map((bar,bi)=>{
+                          const xStart=(bar.s-1)/12*100;
+                          const xEnd=(bar.e-1)/12*100;
+                          const w=xEnd-xStart;
+                          if(w<=0) return null;
+                          return (
+                            <div key={bi}
+                              style={{position:"absolute",top:"50%",transform:"translateY(-50%)",
+                                      left:`${xStart}%`,width:`${w}%`,height:20,
+                                      background:catColor(legend,bar.cat),borderRadius:4,
+                                      display:"flex",alignItems:"center",justifyContent:"center",
+                                      cursor:"pointer",pointerEvents:"all",
+                                      boxShadow:"0 1px 3px rgba(0,0,0,0.2)",overflow:"hidden"}}
+                              onClick={()=>openBarEdit(pi,ri,bi,activeYear)}
+                              onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
+                                text:`${proj.proj.replace("\n"," ")} · ${row.prog}`+
+                                     (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
+                                     (bar.l?` · ${bar.l}`:"")+" ✏️"})}
+                              onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
+                              onMouseLeave={()=>setTooltip(null)}>
+                              {bar.l&&<span style={{fontSize:10,color:"white",fontWeight:700,
+                                                   padding:"0 8px",whiteSpace:"nowrap",
+                                                   textShadow:"0 1px 2px rgba(0,0,0,0.3)"}}>{bar.l}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </td>
                     <td data-sticky="1" style={{textAlign:"center",background:"white",borderBottom:"none",
                         whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px",
                         position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}>
@@ -774,7 +719,7 @@ export default function App() {
                         <span title="드래그하여 순서 변경" style={{cursor:"grab",fontSize:13,color:"#b2bec3",padding:"0 2px",userSelect:"none"}}>⠿</span>
                         <button title="아래에 사업 추가" onClick={()=>openAddProgramAt(pi,ri)}
                           style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>＋</button>
-                        <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars)),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
+                        <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(bars_for_year?.[ri]?.bars||[])),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
                           style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>✏️</button>
                         <button title="삭제" onClick={()=>delProgram(pi,ri)}
                           style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>🗑️</button>
@@ -782,8 +727,8 @@ export default function App() {
                     </td>
                   </tr>
                 )),
-                <tr key={`${pi}-add`}>
-                  <td colSpan={YEARS.length*12+3} style={{height:"8px",background:"#edf0f4",borderTop:"4px solid #b2bec3",borderBottom:"4px solid #b2bec3",padding:0}}/>
+                <tr key={`${pi}-sep`}>
+                  <td colSpan={15} style={{height:"8px",background:"#edf0f4",borderTop:"4px solid #b2bec3",borderBottom:"4px solid #b2bec3",padding:0}}/>
                 </tr>
               ];
             })}
