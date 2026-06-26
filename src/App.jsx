@@ -272,7 +272,6 @@ export default function App(){
           <button onClick={()=>setZoom(z=>Math.min(3.0,+(z+0.2).toFixed(1)))} style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,padding:"0 2px"}}>＋</button>
           <button onClick={()=>setZoom(1.0)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,padding:"0 2px"}}>↺</button>
         </div>
-        <Btn onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}} color="#fdcb6e" textColor="#2d3436">🎨 구분 관리</Btn>
         <Btn onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],partner:"",manager1:"",manager2:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
       </div>
     </div>
@@ -348,7 +347,7 @@ export default function App(){
                 <td data-sticky="1" style={{width:180,minWidth:180,background:"white",border:"none",position:"sticky",left:110,zIndex:3,boxShadow:"4px 0 6px rgba(0,0,0,0.07)"}}/>
                 <td colSpan={12} style={{color:"#b2bec3",fontSize:12,paddingLeft:16,verticalAlign:"middle"}}>
                   사업이 없습니다.
-                  <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:"plan"}});setProgModal({pi,ri:null});}}
+                  <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:cats[0]?.id||"plan"}});setProgModal({pi,ri:null});}}
                     style={{marginLeft:10,background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 8px",fontSize:11}}>＋ 사업 추가</button>
                 </td>
                 <td data-sticky="1" style={{background:"white",border:"none",position:"sticky",right:0,zIndex:3}}/>
@@ -422,9 +421,12 @@ export default function App(){
                     whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px",
                     position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                    <button title="사업 추가" onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:"plan"}});setProgModal({pi,ri:null});}}
+                    <button title="사업 추가" onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:cats[0]?.id||"plan"}});setProgModal({pi,ri:null});}}
                       style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:11}}>＋</button>
-                    <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars||[])),newBar:{s:"",e:"",l:"",cat:"plan"}});setProgModal({pi,ri});}}
+                    <button title="수정" onClick={()=>{
+                      const safeBars=JSON.parse(JSON.stringify(Array.isArray(row.bars)?row.bars:[]));
+                      setTempProg({name:row.prog,bars:safeBars,newBar:{s:"",e:"",l:"",cat:cats[0]?.id||"plan"}});
+                      setProgModal({pi,ri});}}
                       style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:11}}>✏️</button>
                     <button title="삭제" onClick={()=>delProgram(pi,ri)}
                       style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:11}}>🗑️</button>
@@ -494,7 +496,12 @@ export default function App(){
         <div style={{marginBottom:10}}><label style={{fontSize:11,color:"#888",display:"block",marginBottom:4}}>표시 텍스트 (선택)</label>
           <Inp value={tempProg.newBar.l} placeholder="비우면 날짜 자동 표시" onChange={e=>setTempProg(p=>({...p,newBar:{...p.newBar,l:e.target.value}}))}/></div>
         <div style={{marginBottom:10}}>
-          <label style={{fontSize:11,color:"#888",display:"block",marginBottom:6}}>구분</label>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+            <label style={{fontSize:11,color:"#888"}}>구분</label>
+            <button onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}}
+              style={{fontSize:10,color:"#00b894",background:"none",border:"1px solid #00b894",borderRadius:10,
+                      cursor:"pointer",padding:"2px 8px",fontWeight:600}}>+ 구분 편집</button>
+          </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             {cats.map(c=><div key={c.id} onClick={()=>setTempProg(p=>({...p,newBar:{...p.newBar,cat:c.id}}))}
               style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600,
@@ -546,7 +553,13 @@ export default function App(){
           <div style={{flex:1}}><FG label="종료일"><Inp value={tempBar.eStr} placeholder="4/18" onChange={e=>setTempBar(b=>({...b,eStr:e.target.value}))}/></FG></div>
         </div>
         <FG label="표시 텍스트"><Inp value={tempBar.l||""} placeholder="예: 모집 중" onChange={e=>setTempBar(b=>({...b,l:e.target.value}))}/></FG>
-        <FG label="구분">
+        <div style={{marginBottom:14}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+            <label style={{fontSize:12,fontWeight:600,color:"#636e72"}}>구분</label>
+            <button onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}}
+              style={{fontSize:10,color:"#00b894",background:"none",border:"1px solid #00b894",borderRadius:10,
+                      cursor:"pointer",padding:"2px 8px",fontWeight:600}}>+ 구분 편집</button>
+          </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:4}}>
             {cats.map(c=><div key={c.id} onClick={()=>setTempBar(b=>({...b,cat:c.id}))}
               style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600,
@@ -555,7 +568,7 @@ export default function App(){
               <div style={{width:10,height:10,borderRadius:3,background:c.color,flexShrink:0}}/>{c.name}
             </div>)}
           </div>
-        </FG>
+        </div>
         <div style={{display:"flex",justifyContent:"space-between",marginTop:20}}>
           <Btn onClick={delBar} color="#e17055">🗑️ 삭제</Btn>
           <div style={{display:"flex",gap:10}}>
