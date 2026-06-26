@@ -30,7 +30,7 @@ const DEFAULT_LEGEND = [
 // 연도별 기본 데이터 (2026만 샘플, 나머지는 빈 프로젝트 구조)
 function makeDefaultYearData(year) {
   if (year === 2026) return [
-    { proj:"TMI 프로젝트\n(바보의나눔)", color:"#16a085", rows:[
+    { proj:"TMI 프로젝트\n(바보의나눔)", color:"#16a085", manager:"", rows:[
       { prog:"진로 멘토 교육자(기관) 모집", bars:[{s:3.5,e:4.5,cat:"recruit",l:"모집"}] },
       { prog:"참여자 모집, 선발",           bars:[{s:4.0,e:5.5,cat:"recruit",l:"5/1~5/30"}] },
       { prog:"OT 및 진로탐방캠프",         bars:[{s:5.75,e:6.2,cat:"run",l:"12~3"}] },
@@ -41,7 +41,7 @@ function makeDefaultYearData(year) {
       { prog:"쇼케이스(공유회/전시/포트폴리오)", bars:[{s:8.25,e:10.0,cat:"event",l:"8~21"}] },
       { prog:"결과보고",                    bars:[{s:10.5,e:12.5,cat:"result",l:"결과보고"}] },
     ]},
-    { proj:"TMI 프로젝트\n(태안군/서부발전)", color:"#2980b9", rows:[
+    { proj:"TMI 프로젝트\n(태안군/서부발전)", color:"#2980b9", manager:"", rows:[
       { prog:"진로 멘토 교육자(기관) 모집", bars:[{s:1.5,e:2.5,cat:"recruit",l:"모집"},{s:2.5,e:3.5,cat:"run",l:""}] },
       { prog:"참여자 모집, 선발",           bars:[{s:1.75,e:2.75,cat:"recruit",l:"모집"},{s:3.5,e:5.25,cat:"recruit",l:"4/12~5/11"}] },
       { prog:"OT 및 진로탐방캠프",         bars:[{s:5.0,e:5.5,cat:"run",l:"17"}] },
@@ -52,7 +52,7 @@ function makeDefaultYearData(year) {
       { prog:"쇼케이스(공유회/전시/포트폴리오)", bars:[{s:5.75,e:6.75,cat:"event",l:"5/26~6/27"}] },
       { prog:"결과보고",                    bars:[{s:6.75,e:7.25,cat:"result",l:"28"}] },
     ]},
-    { proj:"SMile Music Festival\n(SM엔티)", color:"#e67e22", rows:[
+    { proj:"SMile Music Festival\n(SM엔티)", color:"#e67e22", manager:"", rows:[
       { prog:"결과보고 및 미팅",            bars:[{s:2.75,e:3.0,cat:"result",l:"27~28"}] },
       { prog:"참여자 모집 및 선발",         bars:[{s:3.5,e:6.0,cat:"recruit",l:"5/2~6/1"},{s:6.5,e:7.0,cat:"recruit",l:"24"}] },
       { prog:"서포터즈 모집 및 선발",       bars:[{s:5.0,e:7.5,cat:"recruit",l:"6/24~7/14"}] },
@@ -61,14 +61,14 @@ function makeDefaultYearData(year) {
       { prog:"최종무대",                    bars:[{s:10.5,e:11.0,cat:"event",l:"15"}] },
       { prog:"모니터링",                    bars:[{s:8.0,e:12.5,cat:"result",l:"모니터링"}] },
     ]},
-    { proj:"문장력 프로젝트\n(KT&G장학재단)", color:"#8e44ad", rows:[
+    { proj:"문장력 프로젝트\n(KT&G장학재단)", color:"#8e44ad", manager:"", rows:[
       { prog:"기관 선정 및 답사",           bars:[{s:1.0,e:2.75,cat:"plan",l:"1/14~2/21"}] },
       { prog:"교육자 선정 및 기관 매칭",    bars:[{s:1.0,e:2.75,cat:"recruit",l:"1/14~2/21"}] },
       { prog:"미디어 교육",                 bars:[{s:3.25,e:8.0,cat:"edu",l:"3.17~7/31"}] },
       { prog:"콘텐츠 제작 및 발행",         bars:[{s:5.0,e:10.5,cat:"run",l:"콘텐츠 제작"}] },
       { prog:"결과보고 및 평가회의",        bars:[{s:9.75,e:10.25,cat:"result",l:"29"}] },
     ]},
-    { proj:"MYB CLASS", color:"#c0392b", rows:[
+    { proj:"MYB CLASS", color:"#c0392b", manager:"", rows:[
       { prog:"기관 선정 및 답사",           bars:[{s:2.25,e:2.5,cat:"plan",l:""}] },
       { prog:"교육자 선정 및 기관 매칭",    bars:[{s:3.25,e:3.75,cat:"recruit",l:"3/11~3/20"},{s:4.0,e:4.5,cat:"recruit",l:"4/4~4/18"}] },
       { prog:"미디어 교육",                 bars:[{s:4.75,e:5.5,cat:"edu",l:"4/21~5/2"}] },
@@ -300,8 +300,8 @@ export default function App() {
   function saveProject() {
     if(!tempProj.name.trim()) return alert("프로젝트명을 입력하세요.");
     const next=[...data];
-    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,rows:[]});
-    else next[projModal.idx]={...next[projModal.idx],proj:tempProj.name.trim(),color:tempProj.color};
+    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,manager:tempProj.manager||"",rows:[]});
+    else next[projModal.idx]={...next[projModal.idx],proj:tempProj.name.trim(),color:tempProj.color,manager:tempProj.manager||""};
     upData(next); setProjModal(null); setFilter("all");
   }
   function delProject(pi) {
@@ -451,7 +451,7 @@ export default function App() {
               style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,lineHeight:1,padding:"0 2px"}}>↺</button>
           </div>
           <Btn v="legend" onClick={()=>{setTempLeg(JSON.parse(JSON.stringify(legend)));setLegModal(true);}}>🎨 범례 관리</Btn>
-          <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0]});setProjModal({});}}>+ 프로젝트 추가</Btn>
+          <Btn v="secondary" onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],manager:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
         </div>
       </div>
 
@@ -664,7 +664,7 @@ export default function App() {
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
-                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color});setProjModal({idx:pi});}}
+                          <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,manager:proj.manager||""});setProjModal({idx:pi});}}
                             style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>✏️</button>
                           <button title="삭제" onClick={()=>delProject(pi)}
                             style={{background:"#fab1a0",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>🗑️</button>
@@ -762,7 +762,7 @@ export default function App() {
                   </tr>
                 )),
                 <tr key={`${pi}-add`}>
-                  <td colSpan={YEARS.length*12+3} style={{padding:"4px 10px 8px",background:"#f8f9fa",borderTop:"2px solid #dfe6e9",borderBottom:"2px solid #dfe6e9"}}>
+                  <td colSpan={YEARS.length*12+3} style={{padding:"6px 10px 6px",background:"#f0f2f5",borderTop:"3px solid #dfe6e9",borderBottom:"3px solid #dfe6e9"}}>
                     <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
                       style={{width:"100%",padding:5,fontSize:11,border:"1.5px dashed #b2bec3",borderRadius:5,background:"transparent",cursor:"pointer",color:"#636e72"}}
                       onMouseEnter={e=>{e.target.style.borderColor="#00b894";e.target.style.color="#00b894";}}
@@ -830,6 +830,10 @@ export default function App() {
         <FG label="프로젝트명">
           <Inp value={tempProj.name} placeholder="예: TMI 프로젝트 (바보의나눔)"
             onChange={e=>setTempProj(p=>({...p,name:e.target.value}))} />
+        </FG>
+        <FG label="담당자 (선택)">
+          <Inp value={tempProj.manager||""} placeholder="예: 홍길동"
+            onChange={e=>setTempProj(p=>({...p,manager:e.target.value}))} />
         </FG>
         <FG label="대표 색상">
           <ColorPicker value={tempProj.color} onChange={c=>setTempProj(p=>({...p,color:c}))} />
