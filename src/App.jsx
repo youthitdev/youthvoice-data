@@ -300,7 +300,13 @@ export default function App() {
   function saveProject() {
     if(!tempProj.name.trim()) return alert("프로젝트명을 입력하세요.");
     const next=[...data];
-    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,partner:tempProj.partner||"",manager1:tempProj.manager1||"",manager2:tempProj.manager2||"",rows:[]});
+    if(projModal.idx==null) next.push({proj:tempProj.name.trim(),color:tempProj.color,partner:tempProj.partner||"",manager1:tempProj.manager1||"",manager2:tempProj.manager2||"",rows:[
+      {prog:"프로그램 1",bars:[]},
+      {prog:"프로그램 2",bars:[]},
+      {prog:"프로그램 3",bars:[]},
+      {prog:"프로그램 4",bars:[]},
+      {prog:"프로그램 5",bars:[]},
+    ]});
     else next[projModal.idx]={...next[projModal.idx],proj:tempProj.name.trim(),color:tempProj.color,partner:tempProj.partner||"",manager1:tempProj.manager1||"",manager2:tempProj.manager2||""};
     upData(next); setProjModal(null); setFilter("all");
   }
@@ -413,8 +419,8 @@ export default function App() {
   const isCurrentYear=activeYear===THIS_YEAR;
   const activeCount=isCurrentYear?data.reduce((s,p)=>s+p.rows.filter(r=>r.bars.some(b=>b.s<=TODAY_MONTH&&b.e>=TODAY_MONTH)).length,0):0;
   const todayPct=((TODAY_MONTH-1)/NCOLS*100).toFixed(2);
-  // 행 기준: 2026 데이터(baseData)를 행으로 사용. 필터는 activeYear 데이터 기준.
-  const baseData = allData[THIS_YEAR] || [];
+  // 행 기준: 현재 선택된 연도 데이터
+  const baseData = allData[activeYear] || [];
   const visData = activeFilter==="all"
     ? baseData.map((p,i)=>({...p,_i:i}))
     : baseData.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(activeFilter));
