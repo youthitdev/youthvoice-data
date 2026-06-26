@@ -664,6 +664,12 @@ export default function App() {
                         color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
+                        {(proj.manager1||proj.manager2)&&(
+                          <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.7,textAlign:"center"}}>
+                            {proj.manager1&&<div style={{color:proj.color,fontWeight:700}}>정 {proj.manager1}</div>}
+                            {proj.manager2&&<div style={{color:proj.color,opacity:0.75,fontWeight:500}}>부 {proj.manager2}</div>}
+                          </div>
+                        )}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
                           <button title="수정" onClick={()=>{setTempProj({name:proj.proj.replace("\n"," "),color:proj.color,manager1:proj.manager1||"",manager2:proj.manager2||""});setProjModal({idx:pi});}}
                             style={{background:"#74b9ff",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 6px",fontSize:12}}>✏️</button>
