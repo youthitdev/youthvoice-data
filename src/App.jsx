@@ -272,6 +272,7 @@ export default function App(){
           <button onClick={()=>setZoom(z=>Math.min(3.0,+(z+0.2).toFixed(1)))} style={{background:"none",border:"none",color:"white",cursor:"pointer",fontSize:16,padding:"0 2px"}}>＋</button>
           <button onClick={()=>setZoom(1.0)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,padding:"0 2px"}}>↺</button>
         </div>
+        <Btn onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}} color="#fdcb6e" textColor="#2d3436">🎨 구분</Btn>
         <Btn onClick={()=>{setTempProj({name:"",color:PRESET_COLORS[0],partner:"",manager1:"",manager2:""});setProjModal({});}}>+ 프로젝트 추가</Btn>
       </div>
     </div>
@@ -563,12 +564,7 @@ export default function App(){
         </div>
         <FG label="표시 텍스트"><Inp value={tempBar.l||""} placeholder="예: 모집 중" onChange={e=>setTempBar(b=>({...b,l:e.target.value}))}/></FG>
         <div style={{marginBottom:14}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-            <label style={{fontSize:12,fontWeight:600,color:"#636e72"}}>구분</label>
-            <button onClick={()=>{setTempCats(JSON.parse(JSON.stringify(cats)));setCatModal(true);}}
-              style={{fontSize:10,color:"#00b894",background:"none",border:"1px solid #00b894",borderRadius:10,
-                      cursor:"pointer",padding:"2px 8px",fontWeight:600}}>+ 구분 편집</button>
-          </div>
+          <label style={{fontSize:12,fontWeight:600,color:"#636e72",display:"block",marginBottom:6}}>구분</label>
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:4}}>
             {cats.map(c=><div key={c.id} onClick={()=>setTempBar(b=>({...b,cat:c.id}))}
               style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600,
