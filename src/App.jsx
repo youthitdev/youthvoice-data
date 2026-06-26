@@ -567,7 +567,7 @@ export default function App() {
       {/* 간트 테이블 — 전체 연도 연결, 가로 스크롤 */}
       <div
         ref={chartRef}
-        style={{overflowX:"auto",padding:"20px 0 40px"}}
+        style={{overflowX:"auto",overflowY:"auto",padding:"0 0 40px",maxHeight:"calc(100vh - 280px)"}}
         onWheel={e=>{
           // Ctrl+스크롤 or 트랙패드 핀치줌
           if(e.ctrlKey || e.metaKey) {
@@ -596,27 +596,32 @@ export default function App() {
           });
         }}>
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
-          <thead>
+          <thead style={{position:"sticky",top:0,zIndex:20}}>
             <tr>
               {/* 고정 컬럼 — Project+Program 합쳐서 sticky */}
               <th style={{width:100,minWidth:100,fontSize:11,fontWeight:600,color:"#636e72",padding:"6px 8px",
-                          borderBottom:"2px solid #dfe6e9",textAlign:"center",whiteSpace:"nowrap",background:"white",
-                          position:"sticky",left:0,zIndex:10,boxShadow:"none"}}>Project</th>
+                          borderBottom:"2px solid #dfe6e9",textAlign:"center",whiteSpace:"nowrap",
+                          background:"white",position:"sticky",left:0,top:0,zIndex:30,
+                          boxShadow:"0 2px 4px rgba(0,0,0,0.06)"}}>Project</th>
               <th style={{width:180,minWidth:180,fontSize:11,fontWeight:600,color:"#636e72",padding:"6px 8px 6px 12px",
-                          borderBottom:"2px solid #dfe6e9",textAlign:"left",whiteSpace:"nowrap",background:"white",
-                          position:"sticky",left:100,zIndex:10,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>Program</th>
-              {/* 연도×월 헤더 — 전체 렌더 (고정) */}
+                          borderBottom:"2px solid #dfe6e9",textAlign:"left",whiteSpace:"nowrap",
+                          background:"white",position:"sticky",left:100,top:0,zIndex:30,
+                          boxShadow:"4px 2px 8px rgba(0,0,0,0.08)"}}>Program</th>
+              {/* 연도×월 헤더 */}
               {YEARS.map((y,yi)=>
                 MONTHS.map((m,mi)=>(
                   <th key={`${y}-${mi}`}
                     ref={yi===0&&mi===0?firstYearColRef:null}
                     style={{
                       ...th(`${cellWidth}px`,"center"),
+                      position:"sticky",top:0,zIndex:20,
                       background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"rgba(225,112,85,0.07)":
                                   mi===0?"#f8f9fa":"white",
                       borderLeft: mi===0?"3px solid #b2bec3":"none",
+                      borderBottom:"2px solid #dfe6e9",
                       color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
                       fontSize:10, whiteSpace:"nowrap",
+                      boxShadow:"0 2px 4px rgba(0,0,0,0.04)",
                     }}>
                     {mi===0
                       ? <><span style={{display:"block",fontSize:Math.max(9,Math.min(11,cellWidth/6)),fontWeight:800,color:"#2d3436"}}>{y}</span>
@@ -625,7 +630,9 @@ export default function App() {
                   </th>
                 ))
               )}
-              <th style={{...th("90px","center"),position:"sticky",right:0,zIndex:10,background:"white",boxShadow:"-2px 0 4px rgba(0,0,0,0.06)"}}>관리</th>
+              <th style={{...th("90px","center"),position:"sticky",right:0,top:0,zIndex:30,
+                          background:"white",boxShadow:"-2px 2px 6px rgba(0,0,0,0.06)",
+                          borderBottom:"2px solid #dfe6e9"}}>관리</th>
             </tr>
           </thead>
           <tbody>
