@@ -280,7 +280,7 @@ export default function App(){
     {/* 연도 탭 */}
     <div style={{background:"#1e272e",display:"flex",alignItems:"center",padding:"0 16px"}}>
       {YEARS.map(y=>{
-        const cnt=(allData[y]||[]).reduce((a,b)=>a+b.rows.length,0);
+        const cnt=(allData[y]||[]).length;
         return <button key={y} onClick={()=>setActiveYear(y)}
           style={{padding:"10px 18px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
                   whiteSpace:"nowrap",background:"transparent",flexShrink:0,
