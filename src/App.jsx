@@ -625,7 +625,17 @@ export default function App() {
               const pi=proj._i;
 
               return [
-                ...proj.rows.map((row,ri)=>(
+                ...(proj.rows.length===0?[
+                  <tr key={`${pi}-empty`}>
+                    <td style={{height:48,border:"none",background:"transparent"}}/>
+                    <td colSpan={13} style={{height:48,border:"none",background:"transparent",
+                        verticalAlign:"middle",paddingLeft:16,color:"#b2bec3",fontSize:12}}>
+                      사업이 없습니다. 관리 버튼 ＋ 으로 추가하세요.
+                      <button onClick={()=>{setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi});}}
+                        style={{marginLeft:12,background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"3px 8px",fontSize:11}}>＋ 사업 추가</button>
+                    </td>
+                  </tr>
+                ]:proj.rows.map((row,ri)=>(
                   <tr key={`${pi}-${ri}`}
                     draggable
                     onDragStart={()=>handleDragStart(pi,ri)}
@@ -638,10 +648,10 @@ export default function App() {
                     onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#f0f8ff";})}
                     onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="transparent";})}>
                     {ri===0&&(
-                      <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
+                      <td data-sticky="1" rowSpan={Math.max(1,proj.rows.length)+1} style={{
                         width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",
                         background:`${proj.color}18`,border:"none",borderLeft:`4px solid ${proj.color}`,
-                        padding:"6px",lineHeight:1.5,verticalAlign:"top",color:proj.color,
+                        padding:"6px",lineHeight:1.5,verticalAlign:"middle",color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         {(proj.partner||proj.manager1||proj.manager2)&&(
@@ -724,7 +734,7 @@ export default function App() {
                       </div>
                     </td>
                   </tr>
-                )),
+                ))),
                 <tr key={`${pi}-sep`}>
                   <td colSpan={15} style={{height:"8px",background:"#edf0f4",borderTop:"4px solid #b2bec3",borderBottom:"4px solid #b2bec3",padding:0}}/>
                 </tr>
