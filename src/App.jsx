@@ -665,10 +665,10 @@ export default function App() {
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         {(proj.partner||proj.manager1||proj.manager2)&&(
-                          <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.8,textAlign:"center",color:"#555"}}>
-                            {proj.partner&&<div>🤝 {proj.partner}</div>}
-                            {proj.manager1&&<div>정 {proj.manager1}</div>}
-                            {proj.manager2&&<div style={{opacity:0.7}}>부 {proj.manager2}</div>}
+                          <div style={{marginTop:5,paddingTop:4,borderTop:`1px solid ${proj.color}33`,fontSize:10,lineHeight:1.8,textAlign:"center",color:"#666",fontWeight:400}}>
+                            {proj.partner&&<div style={{fontWeight:400}}>🤝 {proj.partner}</div>}
+                            {proj.manager1&&<div style={{fontWeight:400}}>정 {proj.manager1}</div>}
+                            {proj.manager2&&<div style={{fontWeight:400,opacity:0.7}}>부 {proj.manager2}</div>}
                           </div>
                         )}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
