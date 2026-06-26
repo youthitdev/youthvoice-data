@@ -521,9 +521,13 @@ export default function App() {
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead>
             <tr>
-              {/* 고정 컬럼 */}
-              <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white",borderRight:"none"}}>Project</th>
-              <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",borderLeft:"none",boxShadow:"3px 0 6px rgba(0,0,0,0.07)"}}>Program</th>
+              {/* 고정 컬럼 — Project+Program 합쳐서 sticky */}
+              <th style={{width:100,minWidth:100,fontSize:11,fontWeight:600,color:"#636e72",padding:"6px 8px",
+                          borderBottom:"2px solid #dfe6e9",textAlign:"center",whiteSpace:"nowrap",background:"white",
+                          position:"sticky",left:0,zIndex:10,boxShadow:"none"}}>Project</th>
+              <th style={{width:180,minWidth:180,fontSize:11,fontWeight:600,color:"#636e72",padding:"6px 8px 6px 12px",
+                          borderBottom:"2px solid #dfe6e9",textAlign:"left",whiteSpace:"nowrap",background:"white",
+                          position:"sticky",left:100,zIndex:10,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>Program</th>
               {/* 연도×월 헤더 — 전체 렌더 (고정) */}
               {YEARS.map((y,yi)=>
                 MONTHS.map((m,mi)=>(
@@ -567,10 +571,10 @@ export default function App() {
                     {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
                       <td data-sticky="1" rowSpan={proj.rows.length+1} style={{
-                        fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
-                        borderRight:"none",borderBottom:"1px solid #f0f0f0",
+                        width:100,minWidth:100,fontSize:11,fontWeight:700,textAlign:"center",background:"#f8f9fa",
+                        border:"none",borderBottom:"1px solid #f0f0f0",borderLeft:`4px solid ${proj.color}`,
                         padding:"6px",lineHeight:1.5,verticalAlign:"middle",
-                        color:proj.color,borderLeft:`4px solid ${proj.color}`,
+                        color:proj.color,
                         position:"sticky",left:0,zIndex:3}}>
                         {proj.proj.split("\n").map((t,i)=><div key={i}>{t}</div>)}
                         <div style={{marginTop:6,display:"flex",justifyContent:"center",gap:4}}>
@@ -582,9 +586,9 @@ export default function App() {
                       </td>
                     )}
                     {/* 사업명 셀 (고정) */}
-                    <td data-sticky="1" style={{fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
-                        borderLeft:"none",borderRight:"none",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
-                        position:"sticky",left:120,zIndex:3,boxShadow:"3px 0 6px rgba(0,0,0,0.07)"}}>
+                    <td data-sticky="1" style={{width:180,minWidth:180,fontSize:12,padding:"2px 12px",whiteSpace:"nowrap",background:"white",
+                        border:"none",borderBottom:"1px solid #f0f0f0",verticalAlign:"middle",
+                        position:"sticky",left:100,zIndex:3,boxShadow:"4px 0 8px rgba(0,0,0,0.08)"}}>
                       {row.prog}
                     </td>
                     {/* 연도×월 바 셀 */}
