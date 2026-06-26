@@ -229,12 +229,16 @@ export default function App() {
   const firstYearColRef = useRef(null);
   const activeYearRef = useRef(activeYear);
   const rafRef = useRef(null);
-  const [zoom, setZoom] = useState(1.0);  // 차트 확대/축소 배율
+  const [zoom, setZoom] = useState(1.0);
   const MIN_ZOOM = 0.4;
   const MAX_ZOOM = 3.0;
-  const cellWidth = Math.round(64 * zoom);  // 기본 64px × zoom
+  const cellWidth = Math.round(64 * zoom);
   const MIN_CELL = 36;
   const MAX_CELL = 120;
+  const [barEditModal, setBarEditModal] = useState(null); // {pi,ri,bi}
+  const [tempBar, setTempBar] = useState(null);
+  const dragRowRef = useRef(null); // {pi, ri}
+  const [dragOver, setDragOver] = useState(null); // {pi, ri}
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -341,6 +345,55 @@ export default function App() {
     [rows[ri],rows[newRi]]=[rows[newRi],rows[ri]];
     upData(next);
   }
+  function handleDragStart(pi,ri) { dragRowRef.current={pi,ri}; }
+  function handleDragOver(e,pi,ri) { e.preventDefault(); setDragOver({pi,ri}); }
+  function handleDrop(pi,ri) {
+    const from=dragRowRef.current;
+    if(!from||from.pi!==pi||from.ri===ri) { setDragOver(null); dragRowRef.current=null; return; }
+    const next=data.map(p=>({...p,rows:[...p.rows]}));
+    const rows=next[pi].rows;
+    const [moved]=rows.splice(from.ri,1);
+    rows.splice(ri,0,moved);
+    upData(next);
+    setDragOver(null); dragRowRef.current=null;
+  }
+  function handleDragEnd() { setDragOver(null); dragRowRef.current=null; }
+
+  // 바 수정 모달 열기
+  function openBarEdit(pi,ri,bi,y) {
+    const bar=(allData[y]||[])?.[pi]?.rows?.[ri]?.bars?.[bi];
+    if(!bar) return;
+    setTempBar({...bar, pi, ri, bi, year:y,
+      sStr: monthFloatToLabel(bar.s),
+      eStr: monthFloatToLabel(bar.e - 1/DAYS_IN_MONTH[Math.min(Math.floor(bar.e),12)-1])
+    });
+    setBarEditModal({pi,ri,bi,year:y});
+  }
+  function saveBarEdit() {
+    const s=parseDate(tempBar.sStr), eRaw=parseDate(tempBar.eStr);
+    if(s===null||eRaw===null) return alert("날짜를 올바르게 입력하세요.");
+    const eMonth=Math.floor(eRaw);
+    const e=eRaw+1/DAYS_IN_MONTH[Math.min(eMonth,12)-1];
+    if(s>=e) return alert("시작일이 종료일보다 늦습니다.");
+    const y=barEditModal.year;
+    const next={...allData};
+    next[y]=next[y].map(p=>({...p,rows:[...p.rows]}));
+    next[y][barEditModal.pi].rows[barEditModal.ri].bars[barEditModal.bi]={
+      ...tempBar, s, e, l:tempBar.l, cat:tempBar.cat
+    };
+    setAllData(next); save(next,legend);
+    setBarEditModal(null); setTempBar(null);
+  }
+  function deleteBarEdit() {
+    if(!confirm("이 일정을 삭제할까요?")) return;
+    const y=barEditModal.year;
+    const next={...allData};
+    next[y]=next[y].map(p=>({...p,rows:[...p.rows]}));
+    next[y][barEditModal.pi].rows[barEditModal.ri].bars.splice(barEditModal.bi,1);
+    setAllData(next); save(next,legend);
+    setBarEditModal(null); setTempBar(null);
+  }
+
   function openAddProgramAt(pi,afterRi) {
     setTempProg({name:"",bars:[],newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null},insertAfter:afterRi});
     setProgModal({pi,insertAfter:afterRi});
@@ -561,7 +614,7 @@ export default function App() {
                       ...th(`${cellWidth}px`,"center"),
                       background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
                                   mi===0?"#f0f7ff":"white",
-                      borderLeft: mi===0?"3px solid #2d3436":"1px solid #f0f0f0",
+                      borderLeft: mi===0?"3px solid #b2bec3":"none",
                       color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
                       fontSize:10, whiteSpace:"nowrap",
                     }}>
@@ -590,8 +643,16 @@ export default function App() {
               const pi=proj._i;
               return [
                 ...proj.rows.map((row,ri)=>(
-                  <tr key={`${pi}-${ri}`} style={{borderTop:ri===0?"3px solid #dfe6e9":"none"}}
-                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="#fafbfc";})}
+                  <tr key={`${pi}-${ri}`}
+                    draggable
+                    onDragStart={()=>handleDragStart(pi,ri)}
+                    onDragOver={e=>handleDragOver(e,pi,ri)}
+                    onDrop={()=>handleDrop(pi,ri)}
+                    onDragEnd={handleDragEnd}
+                    style={{borderTop:ri===0?"3px solid #dfe6e9":"none",
+                            background:dragOver?.pi===pi&&dragOver?.ri===ri?"#e8f8f5":"",
+                            transition:"background 0.1s"}}
+                    onMouseEnter={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky&&!dragRowRef.current)td.style.background="#fafbfc";})}
                     onMouseLeave={e=>Array.from(e.currentTarget.cells).forEach(td=>{if(!td.dataset.sticky)td.style.background="";})}>
                     {/* 프로젝트 셀 (고정) */}
                     {ri===0&&(
@@ -627,8 +688,8 @@ export default function App() {
                           <td key={`${y}-${mi}`} style={{
                             position:"relative",height:30,padding:0,
                             borderBottom:"1px solid #f0f0f0",
-                            borderLeft:isYearStart?"3px solid #dde":"1px solid #f5f5f5",
-                            background:isToday?"#fff5f5":"white",
+                            borderLeft:isYearStart?"3px solid #b2bec3":"none",
+                            background:isToday?"#fff8f5":"white",
                             minWidth:cellWidth,width:cellWidth,
                           }}>
                             {/* 오늘 세로선 */}
@@ -650,10 +711,11 @@ export default function App() {
                                   background:catColor(legend,bar.cat),
                                   display:"flex",alignItems:"center",justifyContent:"center",
                                   cursor:"pointer",zIndex:2,overflow:"hidden"}}
+                                  onClick={()=>openBarEdit(pi,ri,bi,y)}
                                   onMouseEnter={e=>setTooltip({x:e.clientX,y:e.clientY,
                                     text:`[${y}] ${proj.proj.replace("\n"," ")} · ${row.prog}`+
                                          (catName(legend,bar.cat)?` [${catName(legend,bar.cat)}]`:"")+
-                                         (bar.l?` · ${bar.l}`:"")})}
+                                         (bar.l?` · ${bar.l}`:"")+" (클릭하여 수정)"})}
                                   onMouseMove={e=>setTooltip(t=>t?{...t,x:e.clientX,y:e.clientY}:null)}
                                   onMouseLeave={()=>setTooltip(null)}>
                                   {overlapS===bar.s&&<span style={{fontSize:9,color:"white",fontWeight:700,padding:"0 3px",whiteSpace:"nowrap"}}>{bar.l||""}</span>}
@@ -668,11 +730,8 @@ export default function App() {
                     <td data-sticky="1" style={{textAlign:"center",background:"white",borderBottom:"1px solid #f0f0f0",
                         whiteSpace:"nowrap",verticalAlign:"middle",padding:"2px 4px",
                         position:"sticky",right:0,zIndex:3,boxShadow:"-2px 0 4px rgba(0,0,0,0.04)"}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2}}>
-                        <button title="위로" onClick={()=>moveProgram(pi,ri,-1)} disabled={ri===0}
-                          style={{background:ri===0?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===0?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===0?"#b2bec3":"#636e72"}}>▲</button>
-                        <button title="아래로" onClick={()=>moveProgram(pi,ri,1)} disabled={ri===(baseData[pi]?.rows?.length??1)-1}
-                          style={{background:ri===(baseData[pi]?.rows?.length??1)-1?"#eee":"#dfe6e9",border:"none",borderRadius:4,cursor:ri===(baseData[pi]?.rows?.length??1)-1?"default":"pointer",padding:"2px 5px",fontSize:10,color:ri===(baseData[pi]?.rows?.length??1)-1?"#b2bec3":"#636e72"}}>▼</button>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                        <span title="드래그하여 순서 변경" style={{cursor:"grab",fontSize:13,color:"#b2bec3",padding:"0 2px",userSelect:"none"}}>⠿</span>
                         <button title="아래에 사업 추가" onClick={()=>openAddProgramAt(pi,ri)}
                           style={{background:"#55efc4",border:"none",borderRadius:4,cursor:"pointer",padding:"2px 5px",fontSize:11}}>＋</button>
                         <button title="수정" onClick={()=>{setTempProg({name:row.prog,bars:JSON.parse(JSON.stringify(row.bars)),newBar:{s:"",e:"",l:"",cat:legend[0]?.id||null}});setProgModal({pi,ri});}}
@@ -707,6 +766,45 @@ export default function App() {
           {tooltip.text}
         </div>
       )}
+
+      {/* 바 수정 모달 */}
+      <Modal open={!!barEditModal} onClose={()=>{setBarEditModal(null);setTempBar(null);}} title="일정 수정">
+        {tempBar&&<>
+          <FG label="시작일">
+            <Inp value={tempBar.sStr} placeholder="예: 3/11"
+              onChange={e=>setTempBar(b=>({...b,sStr:e.target.value}))} />
+          </FG>
+          <FG label="종료일">
+            <Inp value={tempBar.eStr} placeholder="예: 4/18"
+              onChange={e=>setTempBar(b=>({...b,eStr:e.target.value}))} />
+          </FG>
+          <FG label="표시 텍스트">
+            <Inp value={tempBar.l||""} placeholder="예: 3/11~4/18"
+              onChange={e=>setTempBar(b=>({...b,l:e.target.value}))} />
+          </FG>
+          <FG label="구분">
+            <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:4}}>
+              {legend.map(leg=>(
+                <div key={leg.id} onClick={()=>setTempBar(b=>({...b,cat:leg.id}))}
+                  style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:20,
+                          border:`2px solid ${tempBar.cat===leg.id?"#2d3436":"#eee"}`,
+                          cursor:"pointer",fontSize:11,fontWeight:600,background:"white",
+                          boxShadow:tempBar.cat===leg.id?"0 2px 6px rgba(0,0,0,0.12)":"none"}}>
+                  <div style={{width:10,height:10,borderRadius:3,background:leg.color,flexShrink:0}}/>
+                  {leg.name}
+                </div>
+              ))}
+            </div>
+          </FG>
+          <div style={{display:"flex",gap:10,justifyContent:"space-between",marginTop:20}}>
+            <Btn v="danger" onClick={deleteBarEdit}>🗑️ 삭제</Btn>
+            <div style={{display:"flex",gap:10}}>
+              <Btn v="cancel" onClick={()=>{setBarEditModal(null);setTempBar(null);}}>취소</Btn>
+              <Btn v="primary" onClick={saveBarEdit}>저장</Btn>
+            </div>
+          </div>
+        </>}
+      </Modal>
 
       {/* 프로젝트 모달 */}
       <Modal open={!!projModal} onClose={()=>setProjModal(null)} title={projModal?.idx==null?`${activeYear}년 프로젝트 추가`:`프로젝트 수정`}>
