@@ -225,9 +225,8 @@ export default function App() {
   const [tempLeg,setTempLeg]     = useState([]);
   const saveTimer = useRef(null);
   const swipeRef = useRef({active:false, startX:0, startYear:null});
-  const chartRef = useRef(null);   // 차트 스크롤 컨테이너
-  const yearColWidth = 64;          // 각 월 셀 너비(px)
-  const fixedWidth = 120 + 200;     // Project + Program 고정 컬럼 너비
+  const chartRef = useRef(null);      // 차트 스크롤 컨테이너
+  const firstYearColRef = useRef(null); // 2026년 1월 헤더 셀 ref (실제 위치 측정용)
 
   // 현재 연도 데이터
   const data = allData[activeYear] || [];
@@ -277,10 +276,15 @@ export default function App() {
     setActiveYear(y);
     setFilter("all");
     // 클릭한 연도의 첫 번째 월 위치로 스크롤
-    if(chartRef.current) {
+    if(chartRef.current && firstYearColRef.current) {
+      const container = chartRef.current;
+      const firstCell = firstYearColRef.current;
+      // firstYearColRef = 2026년 1월 셀의 실제 left 위치
+      const firstCellLeft = firstCell.offsetLeft;
+      const cellWidth = firstCell.offsetWidth;
       const idx = YEARS.indexOf(y);
-      const scrollLeft = fixedWidth + idx * 12 * yearColWidth - 24;
-      chartRef.current.scrollTo({left: Math.max(0, scrollLeft), behavior:"smooth"});
+      const scrollLeft = firstCellLeft + idx * 12 * cellWidth;
+      container.scrollTo({left: scrollLeft, behavior:"smooth"});
     }
   }
 
@@ -494,11 +498,13 @@ export default function App() {
         ref={chartRef}
         style={{overflowX:"auto",padding:"20px 0 40px"}}
         onScroll={e=>{
-          // 스크롤 위치로 현재 보이는 연도 계산
+          if(!firstYearColRef.current) return;
           const scrollLeft = e.currentTarget.scrollLeft;
-          const contentLeft = scrollLeft - fixedWidth;
+          const firstCellLeft = firstYearColRef.current.offsetLeft;
+          const cellWidth = firstYearColRef.current.offsetWidth || 64;
+          const relativeScroll = scrollLeft - firstCellLeft + cellWidth * 6; // 화면 중앙 기준
           const yearIdx = Math.max(0, Math.min(YEARS.length-1,
-            Math.floor(contentLeft / (12 * yearColWidth))
+            Math.floor(relativeScroll / (12 * cellWidth))
           ));
           const visibleYear = YEARS[yearIdx];
           if(visibleYear !== activeYear) setActiveYear(visibleYear);
@@ -510,9 +516,9 @@ export default function App() {
               <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white"}}>Project</th>
               <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",boxShadow:"2px 0 4px rgba(0,0,0,0.06)"}}>Program</th>
               {/* 연도×월 헤더 */}
-              {YEARS.map(y=>
+              {YEARS.map((y,yi)=>
                 MONTHS.map((m,mi)=>(
-                  <th key={`${y}-${mi}`} style={{
+                  <th key={`${y}-${mi}`} ref={yi===0&&mi===0?firstYearColRef:null} style={{
                     ...th("64px","center"),
                     background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
                                 mi===0?"#f0f7ff":"white",
