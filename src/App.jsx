@@ -502,16 +502,22 @@ export default function App() {
         ref={chartRef}
         style={{overflowX:"auto",padding:"20px 0 40px"}}
         onScroll={e=>{
-          if(!firstYearColRef.current) return;
-          const scrollLeft = e.currentTarget.scrollLeft;
-          const firstCellLeft = firstYearColRef.current.offsetLeft;
-          const cellWidth = firstYearColRef.current.offsetWidth || 64;
-          const relativeScroll = scrollLeft - firstCellLeft + cellWidth * 6; // 화면 중앙 기준
-          const yearIdx = Math.max(0, Math.min(YEARS.length-1,
-            Math.floor(relativeScroll / (12 * cellWidth))
-          ));
-          const visibleYear = YEARS[yearIdx];
-          if(visibleYear !== activeYear) setActiveYear(visibleYear);
+          try {
+            if(!firstYearColRef.current) return;
+            const scrollLeft = e.currentTarget.scrollLeft;
+            const firstCellLeft = firstYearColRef.current.offsetLeft;
+            const cellWidth = firstYearColRef.current.offsetWidth;
+            if(!cellWidth) return;
+            // 뷰포트 왼쪽 기준으로 현재 보이는 연도 계산
+            const visibleLeft = scrollLeft;
+            const yearStartLeft = firstCellLeft;
+            const monthsScrolled = (visibleLeft - yearStartLeft) / cellWidth;
+            const yearIdx = Math.max(0, Math.min(YEARS.length-1,
+              Math.floor(monthsScrolled / 12)
+            ));
+            const visibleYear = YEARS[yearIdx];
+            setActiveYear(prev => prev === visibleYear ? prev : visibleYear);
+          } catch(err) { /* 스크롤 중 안전하게 무시 */ }
         }}>
         <table style={{borderCollapse:"collapse",tableLayout:"fixed"}}>
           <thead>
@@ -519,19 +525,22 @@ export default function App() {
               {/* 고정 컬럼 */}
               <th style={{...th("120px","center"),position:"sticky",left:0,zIndex:10,background:"white"}}>Project</th>
               <th style={{...th("200px","left",{paddingLeft:12}),position:"sticky",left:120,zIndex:10,background:"white",boxShadow:"2px 0 4px rgba(0,0,0,0.06)"}}>Program</th>
-              {/* 연도×월 헤더 */}
+              {/* 연도×월 헤더 — 전체 렌더 (고정) */}
               {YEARS.map((y,yi)=>
                 MONTHS.map((m,mi)=>(
-                  <th key={`${y}-${mi}`} ref={yi===0&&mi===0?firstYearColRef:null} style={{
-                    ...th("64px","center"),
-                    background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
-                                mi===0?"#f0f7ff":"white",
-                    borderLeft: mi===0?"3px solid #2d3436":"none",
-                    color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
-                    fontSize:10,
-                    whiteSpace:"nowrap",
-                  }}>
-                    {mi===0?<><span style={{display:"block",fontSize:11,fontWeight:800,color:"#2d3436"}}>{y}</span>{m}</>:m}
+                  <th key={`${y}-${mi}`}
+                    ref={yi===0&&mi===0?firstYearColRef:null}
+                    style={{
+                      ...th("64px","center"),
+                      background: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#fff5f5":
+                                  mi===0?"#f0f7ff":"white",
+                      borderLeft: mi===0?"3px solid #2d3436":"1px solid #f0f0f0",
+                      color: y===THIS_YEAR&&mi+1===TODAY_MONTH?"#e17055":"#636e72",
+                      fontSize:10, whiteSpace:"nowrap",
+                    }}>
+                    {mi===0
+                      ? <><span style={{display:"block",fontSize:11,fontWeight:800,color:"#2d3436"}}>{y}</span>{m}</>
+                      : m}
                   </th>
                 ))
               )}
@@ -599,9 +608,7 @@ export default function App() {
                               <div style={{position:"absolute",top:0,bottom:0,left:`${((TODAY_MONTH-1)/1)*0+50}%`,width:2,background:"#e17055",zIndex:5,pointerEvents:"none"}}/>
                             </>}
                             {/* 해당 연도·월에 걸치는 바 렌더 */}
-                            {(allData[y]?.[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
-                              // bar.s, bar.e 는 월.소수 (1~13)
-                              // 이 셀(cellS~cellE)과 겹치는지
+                            {((allData[y]||[])[pi]?.rows?.[ri]?.bars||[]).map((bar,bi)=>{
                               const overlapS=Math.max(bar.s,cellS);
                               const overlapE=Math.min(bar.e,cellE);
                               if(overlapS>=overlapE) return null;
