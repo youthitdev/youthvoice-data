@@ -149,9 +149,9 @@ export default function App(){
   const [tempBar,setTempBar]     = useState(null);
 
   const saveTimer = useRef(null);
+  const [filter, setFilter] = useState("all");
   const data = allData[activeYear]||[];
   const visData = filter==="all" ? data.map((p,i)=>({...p,_i:i})) : data.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(filter));
-  const [filter, setFilter] = useState("all");
   const dragProj = useRef(null);
   const dragProg = useRef(null);
   const [dragOverProj, setDragOverProj] = useState(null);
