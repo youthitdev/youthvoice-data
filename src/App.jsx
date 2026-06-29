@@ -150,6 +150,8 @@ export default function App(){
 
   const saveTimer = useRef(null);
   const data = allData[activeYear]||[];
+  const visData = filter==="all" ? data.map((p,i)=>({...p,_i:i})) : data.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(filter));
+  const [filter, setFilter] = useState("all");
   const dragProj = useRef(null);
   const dragProg = useRef(null);
   const [dragOverProj, setDragOverProj] = useState(null);
@@ -314,7 +316,7 @@ export default function App(){
     <div style={{background:"#1e272e",display:"flex",alignItems:"center",padding:"0 16px"}}>
       {YEARS.map(y=>{
         const cnt=(allData[y]||[]).length;
-        return <button key={y} onClick={()=>setActiveYear(y)}
+        return <button key={y} onClick={()=>{setActiveYear(y);setFilter("all");}}
           style={{padding:"10px 18px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
                   whiteSpace:"nowrap",background:"transparent",flexShrink:0,
                   color:activeYear===y?"#00b894":"rgba(255,255,255,0.45)",
@@ -326,8 +328,25 @@ export default function App(){
       })}
     </div>
 
+    {/* 프로젝트 필터 */}
+    <div style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:"white",borderBottom:"1px solid #eee",flexWrap:"wrap"}}>
+      <button onClick={()=>setFilter("all")}
+        style={{padding:"4px 14px",borderRadius:20,border:`1.5px solid ${filter==="all"?"#2d3436":"#dfe6e9"}`,
+                background:filter==="all"?"#2d3436":"white",color:filter==="all"?"white":"#636e72",
+                cursor:"pointer",fontSize:12,fontWeight:600}}>전체</button>
+      {data.map((p,i)=>(
+        <button key={i} onClick={()=>setFilter(String(i))}
+          style={{padding:"4px 14px",borderRadius:20,border:`1.5px solid ${filter===String(i)?p.color:"#dfe6e9"}`,
+                  background:filter===String(i)?p.color:"white",color:filter===String(i)?"white":"#636e72",
+                  cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:5}}>
+          <span style={{width:8,height:8,borderRadius:"50%",background:filter===String(i)?"white":p.color,display:"inline-block",flexShrink:0}}/>
+          {p.proj.replace("\n"," ")}
+        </button>
+      ))}
+    </div>
+
     {/* 차트 */}
-    <div style={{overflowX:"auto",overflowY:"auto",maxHeight:"calc(100vh - 140px)"}}>
+    <div style={{overflowX:"auto",overflowY:"auto",maxHeight:"calc(100vh - 175px)"}}>
       <table style={{borderCollapse:"collapse",tableLayout:"fixed",minWidth:300}}>
         <thead style={{position:"sticky",top:0,zIndex:20}}>
           <tr>
@@ -357,7 +376,7 @@ export default function App(){
               <div style={{marginTop:6,fontSize:12}}>우측 상단 "+ 프로젝트 추가"로 시작하세요!</div>
             </div>
           </td></tr>}
-          {data.map((proj,pi)=>[
+          {visData.map((proj)=>{ const pi=proj._i; return [
             ...(proj.rows.length===0?[
               <tr key={`${pi}-empty`}>
                 <td data-sticky="1" rowSpan={2} style={{width:110,minWidth:110,textAlign:"center",verticalAlign:"middle",
@@ -486,7 +505,7 @@ export default function App(){
             <tr key={`${pi}-sep`}>
               <td colSpan={15} style={{height:6,background:"#e8ecf0",borderTop:"3px solid #cdd2d8",borderBottom:"3px solid #cdd2d8",padding:0}}/>
             </tr>
-          ])}
+          ];})}
         </tbody>
       </table>
     </div>
