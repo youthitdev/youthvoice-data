@@ -149,9 +149,9 @@ export default function App(){
   const [tempBar,setTempBar]     = useState(null);
 
   const saveTimer = useRef(null);
-  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(new Set()); // 빈 Set = 전체 보기
   const data = allData[activeYear]||[];
-  const visData = filter==="all" ? data.map((p,i)=>({...p,_i:i})) : data.map((p,i)=>({...p,_i:i})).filter(p=>p._i===parseInt(filter));
+  const visData = selected.size===0 ? data.map((p,i)=>({...p,_i:i})) : data.map((p,i)=>({...p,_i:i})).filter(p=>selected.has(p._i));
   const dragProj = useRef(null);
   const dragProg = useRef(null);
   const [dragOverProj, setDragOverProj] = useState(null);
@@ -316,7 +316,7 @@ export default function App(){
     <div style={{background:"#1e272e",display:"flex",alignItems:"center",padding:"0 16px"}}>
       {YEARS.map(y=>{
         const cnt=(allData[y]||[]).length;
-        return <button key={y} onClick={()=>{setActiveYear(y);setFilter("all");}}
+        return <button key={y} onClick={()=>{setActiveYear(y);setSelected(new Set());}}
           style={{padding:"10px 18px",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
                   whiteSpace:"nowrap",background:"transparent",flexShrink:0,
                   color:activeYear===y?"#00b894":"rgba(255,255,255,0.45)",
@@ -328,21 +328,35 @@ export default function App(){
       })}
     </div>
 
-    {/* 프로젝트 필터 */}
+    {/* 프로젝트 필터 — 멀티 선택 */}
     <div style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:"white",borderBottom:"1px solid #eee",flexWrap:"wrap"}}>
-      <button onClick={()=>setFilter("all")}
-        style={{padding:"4px 14px",borderRadius:20,border:`1.5px solid ${filter==="all"?"#2d3436":"#dfe6e9"}`,
-                background:filter==="all"?"#2d3436":"white",color:filter==="all"?"white":"#636e72",
+      <button onClick={()=>setSelected(new Set())}
+        style={{padding:"4px 14px",borderRadius:20,
+                border:`1.5px solid ${selected.size===0?"#2d3436":"#dfe6e9"}`,
+                background:selected.size===0?"#2d3436":"white",
+                color:selected.size===0?"white":"#636e72",
                 cursor:"pointer",fontSize:12,fontWeight:600}}>전체</button>
-      {data.map((p,i)=>(
-        <button key={i} onClick={()=>setFilter(String(i))}
-          style={{padding:"4px 14px",borderRadius:20,border:`1.5px solid ${filter===String(i)?p.color:"#dfe6e9"}`,
-                  background:filter===String(i)?p.color:"white",color:filter===String(i)?"white":"#636e72",
-                  cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:5}}>
-          <span style={{width:8,height:8,borderRadius:"50%",background:filter===String(i)?"white":p.color,display:"inline-block",flexShrink:0}}/>
+      {data.map((p,i)=>{
+        const on=selected.has(i);
+        return <button key={i} onClick={()=>{
+            setSelected(prev=>{
+              const next=new Set(prev);
+              if(next.has(i)) next.delete(i); else next.add(i);
+              return next;
+            });
+          }}
+          style={{padding:"4px 14px",borderRadius:20,
+                  border:`1.5px solid ${on?p.color:"#dfe6e9"}`,
+                  background:on?p.color:"white",color:on?"white":"#636e72",
+                  cursor:"pointer",fontSize:12,fontWeight:600,
+                  display:"flex",alignItems:"center",gap:5}}>
+          <span style={{width:8,height:8,borderRadius:"50%",background:on?"white":p.color,display:"inline-block",flexShrink:0}}/>
           {p.proj.replace("\n"," ")}
-        </button>
-      ))}
+        </button>;
+      })}
+      {selected.size>0&&<button onClick={()=>setSelected(new Set())}
+        style={{padding:"4px 10px",borderRadius:20,border:"1px solid #dfe6e9",background:"none",
+                cursor:"pointer",fontSize:11,color:"#b2bec3"}}>✕ 초기화</button>}
     </div>
 
     {/* 차트 */}
